@@ -748,7 +748,6 @@
     <a data-page="premium" onclick="goPage('premium')">Premium Consultation</a>
     <a data-page="partner" onclick="goPage('partner')">Become a Channel Partner</a>
     <a class="nav-cta" onclick="openAuth()" id="authNavLink" data-i18n>Sign In</a>
-    <a class="nav-cta" onclick="openCart()" id="cartNavLink" style="position:relative;">🛒 <span data-i18n>Cart</span><span id="cartCount" style="display:none;position:absolute;top:-8px;right:-8px;background:var(--gold);color:var(--navy-deep);border-radius:50%;width:18px;height:18px;font-size:0.65rem;align-items:center;justify-content:center;">0</span></a>
     <span class="lang-toggle">
       <button class="lang-btn active" id="langBtnEN" onclick="setLanguage('en')">EN</button>
       <button class="lang-btn" id="langBtnHI" onclick="setLanguage('hi')">हि</button>
@@ -1357,7 +1356,8 @@
           <div class="field"><label>Postal Address</label><input type="text" id="cpAddress"></div>
           <div class="field"><label>Occupation</label><input type="text" id="cpOccupation"></div>
           <div class="field"><label>Mobile Number</label><input type="tel" id="cpMobile"></div>
-          <p class="note" style="margin-top:10px;margin-bottom:4px;">These payment details are collected now so we can pay out your referral commission later — nothing is charged to you.</p>
+          <p class="note" style="margin-top:10px;margin-bottom:4px;">These payment details are collected now so we can pay out your referral commission later — nothing is charged to you. Fill in either your UPI details, or your bank account details — whichever you prefer.</p>
+          <p style="font-size:0.85rem;color:var(--gold);font-weight:600;margin-top:10px;margin-bottom:2px;">Option A — UPI</p>
           <div class="field"><label>Payment App (optional)</label>
             <select id="cpPaymentApp">
               <option value="">— Select —</option>
@@ -1368,10 +1368,12 @@
             </select>
           </div>
           <div class="field"><label>UPI ID (optional)</label><input type="text" id="cpUpi" placeholder="e.g. yourname@okhdfcbank"></div>
+          <p style="font-size:0.85rem;color:var(--gold);font-weight:600;margin-top:14px;margin-bottom:2px;">Option B — Bank Account</p>
           <div class="field"><label>Bank Account Holder Name (optional)</label><input type="text" id="cpBankName"></div>
           <div class="field"><label>Bank Account Number (optional)</label><input type="text" id="cpBankAccount"></div>
           <div class="field"><label>IFSC Code (optional)</label><input type="text" id="cpBankIfsc" style="text-transform:uppercase;"></div>
           <div class="field"><label>Bank Name (optional)</label><input type="text" id="cpBankBranch"></div>
+          <div class="field"><label>PIN Code (optional)</label><input type="text" id="cpBankPincode" inputmode="numeric" maxlength="6" placeholder="e.g. 226001"></div>
           <div class="field">
             <label>Email</label>
             <div style="display:flex;gap:8px;">
@@ -1758,6 +1760,7 @@
     <div class="service-tabs" style="margin-top:16px;margin-bottom:10px;">
       <button data-ptab="details" onclick="selectProfileTab('details')">Account Details</button>
       <button data-ptab="orders" onclick="selectProfileTab('orders')">My Orders</button>
+      <button data-ptab="registrations" onclick="selectProfileTab('registrations')">My Registrations</button>
       <button data-ptab="partner" id="partnerTabBtn" onclick="selectProfileTab('partner')" style="display:none;">My Channel Partner ID</button>
       <button data-ptab="support" onclick="selectProfileTab('support')">Help & Support</button>
     </div>
@@ -1777,8 +1780,13 @@
     </div>
 
     <div id="ptab-orders" style="display:none;">
-      <h4 style="color:var(--gold);font-family:var(--serif-b);margin:10px 0 10px;font-size:0.95rem;">My Orders & Registrations</h4>
+      <h4 style="color:var(--gold);font-family:var(--serif-b);margin:10px 0 10px;font-size:0.95rem;">My Orders</h4>
       <div id="profileOrders"></div>
+    </div>
+
+    <div id="ptab-registrations" style="display:none;">
+      <h4 style="color:var(--gold);font-family:var(--serif-b);margin:10px 0 10px;font-size:0.95rem;">My Registrations</h4>
+      <div id="profileRegistrations"></div>
     </div>
 
     <div id="ptab-partner" style="display:none;">
@@ -2100,7 +2108,8 @@ function cpSubmitRegistration(){
     bankAccountHolderName: document.getElementById('cpBankName').value.trim(),
     bankAccountNumber: document.getElementById('cpBankAccount').value.trim(),
     bankIfsc: document.getElementById('cpBankIfsc').value.trim(),
-    bankName: document.getElementById('cpBankBranch').value.trim()
+    bankName: document.getElementById('cpBankBranch').value.trim(),
+    bankPincode: document.getElementById('cpBankPincode').value.trim()
   };
   const btn=document.getElementById('cpSubmitBtn');
   const orig=btn.textContent;
@@ -2246,22 +2255,22 @@ function openProfile(){
   document.getElementById('profileDetailEmail').textContent=currentUserEmail;
   const box=document.getElementById('profileOrders');
   if(userOrders.length===0){
-    box.innerHTML='<p style="font-size:0.88rem;color:#c9c2a0;">'+T('No orders or registrations yet.','अभी तक कोई ऑर्डर या पंजीकरण नहीं है।')+'</p>';
+    box.innerHTML='<p style="font-size:0.88rem;color:var(--ink);opacity:0.75;">'+T('No orders yet.','अभी तक कोई ऑर्डर नहीं है।')+'</p>';
   }else{
     const total=userOrders.reduce((s,o)=>s+(o.amount||0),0);
     box.innerHTML=`
-      <div style="display:flex;justify-content:space-between;padding-bottom:12px;margin-bottom:8px;border-bottom:1px solid rgba(196,154,69,0.3);">
+      <div style="display:flex;justify-content:space-between;padding-bottom:12px;margin-bottom:8px;border-bottom:1px solid rgba(173,124,60,0.35);">
         <span style="font-size:0.85rem;color:var(--gold-soft);">${T('Total across all orders','सभी ऑर्डर का कुल योग')}</span>
         <span style="font-size:0.9rem;color:var(--gold-soft);font-family:var(--serif-b);">${total>0?('₹'+total.toLocaleString('en-IN')):'—'}</span>
       </div>
     ` + userOrders.map((o,i)=>`
-      <div style="border-bottom:1px solid rgba(196,154,69,0.2);padding:10px 0;">
+      <div style="border-bottom:1px solid rgba(173,124,60,0.25);padding:10px 0;">
         <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleOrderDetail(${i})">
-          <span style="font-size:0.9rem;color:#EDE6C8;">${o.label}</span>
-          <span style="font-size:0.78rem;color:#a99f7e;text-align:right;">${o.when}<br><span class="order-status">${o.status}</span></span>
+          <span style="font-size:0.9rem;color:var(--ink);">${o.label}</span>
+          <span style="font-size:0.78rem;color:var(--gold-soft);text-align:right;">${o.when}<br><span class="order-status">${o.status}</span></span>
         </div>
         ${o.amount ? `<p style="font-size:0.82rem;color:var(--gold-soft);margin-top:4px;">₹${o.amount.toLocaleString('en-IN')}</p>` : ''}
-        <div id="orderDetail${i}" style="display:none;margin-top:8px;font-size:0.82rem;color:#c9c2a0;line-height:1.6;">
+        <div id="orderDetail${i}" style="display:none;margin-top:8px;font-size:0.82rem;color:var(--ink);opacity:0.8;line-height:1.6;">
           ${o.details ? Object.entries(o.details).filter(([k,v])=>v).map(([k,v])=>`<div><b style="color:var(--gold);">${k}:</b> ${v}</div>`).join('') : ''}
         </div>
       </div>`).join('');
@@ -2270,6 +2279,37 @@ function openProfile(){
   openModal('profileModal');
   translatePass(document.getElementById('profileModal'));
   loadChannelPartnerStatus();
+  loadMyRegistrations();
+}
+// Fetches this customer's own service registrations (Premium Consultation,
+// Rudra Dowsing, Dosh Nivaran, Unique ID, Sutra, etc.) — shown in their
+// own "My Registrations" tab, separate from "My Orders" (which is only
+// the live-payment CEI & LPI orders). Each shows whatever status it's
+// currently at, since there's no live payment step for these to key off.
+function loadMyRegistrations(){
+  const box=document.getElementById('profileRegistrations');
+  if(!box || !currentUserEmail) return;
+  box.innerHTML='<p style="font-size:0.85rem;color:var(--ink);opacity:0.6;">'+T('Loading…','लोड हो रहा है…')+'</p>';
+  fetch(OTP_BACKEND_URL+'/api/registrations?email='+encodeURIComponent(currentUserEmail))
+    .then(r=>r.json())
+    .then(data=>{
+      const regs=(data && data.registrations) || [];
+      if(regs.length===0){
+        box.innerHTML='<p style="font-size:0.88rem;color:var(--ink);opacity:0.75;">'+T('No registrations yet.','अभी तक कोई पंजीकरण नहीं है।')+'</p>';
+        return;
+      }
+      box.innerHTML=regs.map(reg=>{
+        const statusLabel = reg.status==='confirmed' ? T('Confirmed','कन्फर्म')
+          : (reg.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending — Awaiting Confirmation','लंबित — पुष्टि की प्रतीक्षा'));
+        const statusColor = reg.status==='confirmed' ? '#1E7E34' : (reg.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
+        const when=new Date(reg.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+        return '<div style="border-bottom:1px solid rgba(173,124,60,0.25);padding:10px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+          '<span style="font-size:0.9rem;color:var(--ink);">'+reg.service+'<br><span style="font-size:0.78rem;opacity:0.65;">'+when+(reg.registrationNumber?' · '+reg.registrationNumber:'')+'</span></span>'+
+          '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
+          '</div>';
+      }).join('');
+    })
+    .catch(()=>{ box.innerHTML='<p style="font-size:0.85rem;color:#B03A2E;">'+T('Could not load registrations.','पंजीकरण लोड नहीं हो सका।')+'</p>'; });
 }
 // Checks whether the signed-in email is a registered Channel Partner and,
 // if so, reveals the "My Channel Partner ID" tab and fills it with their
@@ -2306,9 +2346,10 @@ function loadChannelPartnerStatus(){
         html+=orders.map(o=>{
           const statusLabel = o.status==='paid' ? T('Confirmed','कन्फर्म') : T('Pending','लंबित');
           const statusColor = o.status==='paid' ? '#1E7E34' : 'var(--gold-soft)';
+          const billLink = o.receiptPdfUrl ? ' · <a href="'+OTP_BACKEND_URL+o.receiptPdfUrl+'" target="_blank" style="color:var(--gold);">'+T('View Bill','बिल देखें')+'</a>' : '';
           return '<div style="border-bottom:1px solid rgba(173,124,60,0.25);padding:8px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
             '<span style="font-size:0.85rem;color:var(--ink);">'+(o.customerName||'—')+' <span style="opacity:0.65;">('+T('CEI & LPI','CEI एवं LPI')+')</span>'+
-            '<br><span style="font-size:0.74rem;color:var(--ink);opacity:0.6;">'+fmtPartnerDate(o.date)+'</span></span>'+
+            '<br><span style="font-size:0.74rem;color:var(--ink);opacity:0.6;">'+fmtPartnerDate(o.date)+' · '+o.receiptNumber+billLink+'</span></span>'+
             '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
             '</div>';
         }).join('');
@@ -2317,7 +2358,7 @@ function loadChannelPartnerStatus(){
           const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
           return '<div style="border-bottom:1px solid rgba(173,124,60,0.25);padding:8px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
             '<span style="font-size:0.85rem;color:var(--ink);">'+(l.customerName||'—')+' <span style="opacity:0.65;">('+l.service+')</span>'+
-            '<br><span style="font-size:0.74rem;color:var(--ink);opacity:0.6;">'+fmtPartnerDate(l.date)+'</span></span>'+
+            '<br><span style="font-size:0.74rem;color:var(--ink);opacity:0.6;">'+fmtPartnerDate(l.date)+(l.registrationNumber?' · '+l.registrationNumber:'')+'</span></span>'+
             '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
             '</div>';
         }).join('');
@@ -2327,7 +2368,7 @@ function loadChannelPartnerStatus(){
     .catch(()=>{ tabBtn.style.display='none'; });
 }
 function selectProfileTab(tab){
-  ['details','orders','partner','support'].forEach(t=>{
+  ['details','orders','registrations','partner','support'].forEach(t=>{
     document.getElementById('ptab-'+t).style.display = (t===tab) ? 'block' : 'none';
   });
   document.querySelectorAll('#profileModal .service-tabs button').forEach(b=>{
@@ -2497,30 +2538,6 @@ function syncOrdersFromServer(email){
           status:o.reportPdfUrl?T('Report Ready','रिपोर्ट तैयार है'):(o.reportOtpUsed?T('Unlocked — Generating Report','अनलॉक किया गया — रिपोर्ट तैयार हो रही है'):T('Paid — Awaiting Portal Unlock','भुगतान हो गया — पोर्टल अनलॉक लंबित')),
           amount:o.amount?Math.round(o.amount/100):null,
           details:Object.keys(detailLinks).length?detailLinks:null
-        });
-      });
-    })
-    .catch(()=>{});
-  // Service registrations (Premium Consultation, Rudra Dowsing, Dosh
-  // Nivaran, Unique ID, Sutra, etc.) — same "My Orders" list, shown with
-  // whatever status they're currently at (Pending/Confirmed/Not
-  // Converted), since there's no live payment step for these to key off.
-  fetch(OTP_BACKEND_URL+'/api/registrations?email='+encodeURIComponent(email))
-    .then(r=>r.json())
-    .then(data=>{
-      if(!data || !data.registrations) return;
-      data.registrations.forEach(reg=>{
-        const regKey='reg-'+reg._id;
-        if(userOrders.some(u=>u.receiptNumber===regKey)) return;
-        const statusLabel = reg.status==='confirmed' ? T('Confirmed','कन्फर्म')
-          : (reg.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending — Awaiting Confirmation','लंबित — पुष्टि की प्रतीक्षा'));
-        userOrders.push({
-          receiptNumber:regKey,
-          label:reg.service+' — '+T('Registration','पंजीकरण'),
-          when:new Date(reg.createdAt).toLocaleDateString(),
-          status:statusLabel,
-          amount:null,
-          details:null
         });
       });
     })
@@ -2727,7 +2744,8 @@ function submitRegistration(){
       showRegSuccess(T('Thanks — we will notify you as soon as this is back in stock.','धन्यवाद — उपलब्ध होते ही हम आपको सूचित करेंगे।'));
       return;
     }
-    showRegSuccess(T('Registration submitted — our team will contact you within 3 days.','पंजीकरण सबमिट हो गया — हमारी टीम 3 दिनों के भीतर आपसे संपर्क करेगी।'));
+    const regNumMsg = data.registrationNumber ? (' '+T('Your registration number is','आपका पंजीकरण संख्या है')+' '+data.registrationNumber+'.') : '';
+    showRegSuccess(T('Registration submitted — our team will contact you within 3 days.','पंजीकरण सबमिट हो गया — हमारी टीम 3 दिनों के भीतर आपसे संपर्क करेगी।')+regNumMsg);
   })
   .catch(()=>{
     btn.textContent=originalText; btn.disabled=false;
