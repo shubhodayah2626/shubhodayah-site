@@ -1741,6 +1741,7 @@
     <div class="field" style="margin-top:16px;">
       <label>Referral Code (optional)</label>
       <input type="text" id="kachaReferralInput" placeholder="Enter code if you have one" oninput="updateKachaBillAmount()">
+      <p id="kachaReferralMsg" style="font-size:0.82rem;margin-top:4px;"></p>
     </div>
 
     <button class="btn" style="width:100%;margin-top:10px;" onclick="proceedFromKachaBill()">Proceed to Payment</button>
@@ -2372,17 +2373,46 @@ function openKachaBillModal(){
   updateKachaBillAmount();
   openModal('kachaBillModal');
 }
+let kachaVerifyTimer=null;
 function updateKachaBillAmount(){
   const code=document.getElementById('kachaReferralInput').value.trim();
   const discountRow=document.getElementById('kachaBillDiscountRow');
   const amountEl=document.getElementById('kachaBillAmount');
-  if(code){
-    discountRow.style.display='flex';
-    amountEl.textContent='₹1,999';
-  }else{
+  const msgEl=document.getElementById('kachaReferralMsg');
+  clearTimeout(kachaVerifyTimer);
+  if(!code){
     discountRow.style.display='none';
     amountEl.textContent='₹2,199';
+    msgEl.textContent='';
+    return;
   }
+  msgEl.textContent=T('Checking code…','कोड जांचा जा रहा है…');
+  msgEl.style.color='#a99f7e';
+  kachaVerifyTimer=setTimeout(()=>{
+    fetch(OTP_BACKEND_URL+'/api/channel-partner/verify/'+encodeURIComponent(code))
+      .then(r=>r.json())
+      .then(data=>{
+        // if the input changed while this request was in flight, ignore this stale result
+        if(document.getElementById('kachaReferralInput').value.trim()!==code) return;
+        if(data && data.valid){
+          discountRow.style.display='flex';
+          amountEl.textContent='₹1,999';
+          msgEl.style.color='#27AE60';
+          msgEl.textContent=T('Valid referral code ✓','मान्य रेफरल कोड ✓');
+        }else{
+          discountRow.style.display='none';
+          amountEl.textContent='₹2,199';
+          msgEl.style.color='#C0392B';
+          msgEl.textContent=T('Code not recognized — no discount applied.','कोड मान्य नहीं है — कोई छूट लागू नहीं होगी।');
+        }
+      })
+      .catch(()=>{
+        discountRow.style.display='none';
+        amountEl.textContent='₹2,199';
+        msgEl.style.color='#C0392B';
+        msgEl.textContent=T('Could not verify code right now.','अभी कोड सत्यापित नहीं हो सका।');
+      });
+  },450);
 }
 function proceedFromKachaBill(){
   closeModal('kachaBillModal');
