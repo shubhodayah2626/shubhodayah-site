@@ -113,7 +113,8 @@
   }
   .logo-svg{width:44px;height:44px;position:relative;z-index:1;}
   .logo-text{font-family:var(--serif-b);letter-spacing:3px;font-size:1.15rem;color:var(--gold-soft);}
-  nav{display:flex;gap:28px;align-items:center;}
+  nav{display:flex;gap:28px;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  nav::-webkit-scrollbar{display:none;}
   nav a{
     color:var(--cream);text-decoration:none;font-size:0.82rem;
     letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;
@@ -1357,10 +1358,19 @@
           <div class="field"><label>Occupation</label><input type="text" id="cpOccupation"></div>
           <div class="field"><label>Mobile Number</label><input type="tel" id="cpMobile"></div>
           <p class="note" style="margin-top:10px;margin-bottom:4px;">These payment details are collected now so we can pay out your referral commission later — nothing is charged to you.</p>
-          <div class="field"><label>UPI ID (Google Pay / PhonePe, etc.)</label><input type="text" id="cpUpi" placeholder="e.g. yourname@okhdfcbank"></div>
-          <div class="field"><label>Bank Account Holder Name</label><input type="text" id="cpBankName"></div>
-          <div class="field"><label>Bank Account Number</label><input type="text" id="cpBankAccount"></div>
-          <div class="field"><label>IFSC Code</label><input type="text" id="cpBankIfsc" style="text-transform:uppercase;"></div>
+          <div class="field"><label>Payment App (optional)</label>
+            <select id="cpPaymentApp">
+              <option value="">— Select —</option>
+              <option value="Google Pay">Google Pay</option>
+              <option value="PhonePe">PhonePe</option>
+              <option value="Paytm">Paytm</option>
+              <option value="Other UPI">Other UPI</option>
+            </select>
+          </div>
+          <div class="field"><label>UPI ID (optional)</label><input type="text" id="cpUpi" placeholder="e.g. yourname@okhdfcbank"></div>
+          <div class="field"><label>Bank Account Holder Name (optional)</label><input type="text" id="cpBankName"></div>
+          <div class="field"><label>Bank Account Number (optional)</label><input type="text" id="cpBankAccount"></div>
+          <div class="field"><label>IFSC Code (optional)</label><input type="text" id="cpBankIfsc" style="text-transform:uppercase;"></div>
           <div class="field"><label>Bank Name (optional)</label><input type="text" id="cpBankBranch"></div>
           <div class="field">
             <label>Email</label>
@@ -2085,6 +2095,7 @@ function cpSubmitRegistration(){
     mobilePhone: document.getElementById('cpMobile').value.trim(),
     occupation: document.getElementById('cpOccupation').value.trim(),
     upiId: document.getElementById('cpUpi').value.trim(),
+    paymentApp: document.getElementById('cpPaymentApp').value,
     bankAccountHolderName: document.getElementById('cpBankName').value.trim(),
     bankAccountNumber: document.getElementById('cpBankAccount').value.trim(),
     bankIfsc: document.getElementById('cpBankIfsc').value.trim(),
