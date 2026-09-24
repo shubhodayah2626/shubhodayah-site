@@ -2084,6 +2084,7 @@ function restoreSession(){
       if(navLink) navLink.textContent=T('Hi, ','नमस्ते, ')+parsed.name.split(' ')[0];
       if(typeof syncOrdersFromServer==='function') syncOrdersFromServer(parsed.email);
       if(typeof loadChannelPartnerStatus==='function') loadChannelPartnerStatus();
+      if(typeof prefillPartnerFormFromSession==='function') prefillPartnerFormFromSession();
     }
   }catch(e){ /* corrupted value — ignore, just stays signed out */ }
 }
@@ -2139,11 +2140,42 @@ function goPage(name){
       if(r.top<window.innerHeight) el.classList.add('in');
     });
   });
+  if(name==='partner') prefillPartnerFormFromSession();
 }
 
 /* ---------- Services tabs ---------- */
 /* ---------- Channel Partner registration (Services tab) ---------- */
 let cpEmailVerified=false;
+
+// If someone's already signed in, their email was already verified via
+// OTP to get them into that session in the first place — asking them to
+// verify the SAME email a second time here is pointless friction, so
+// this fills in their name/email and skips straight past that step.
+function prefillPartnerFormFromSession(){
+  const nameField=document.getElementById('cpName');
+  const emailField=document.getElementById('cpEmail');
+  const sendBtn=document.getElementById('cpSendOtpBtn');
+  const otpRow=document.getElementById('cpOtpRow');
+  const submitBtn=document.getElementById('cpSubmitBtn');
+  const msg=document.getElementById('cpMsg');
+  if(!nameField || !emailField) return;
+  if(!isSignedIn || !currentUserEmail){
+    // Not signed in — leave the form exactly as a fresh, unverified one.
+    nameField.readOnly=false;
+    emailField.readOnly=false;
+    if(sendBtn) sendBtn.style.display='';
+    return;
+  }
+  nameField.value=currentUserName||'';
+  emailField.value=currentUserEmail;
+  emailField.readOnly=true; // tied to the verified session — changing it would need its own OTP, so it's locked here
+  cpEmailVerified=true;
+  if(sendBtn) sendBtn.style.display='none';
+  if(otpRow) otpRow.style.display='none';
+  if(submitBtn) submitBtn.disabled=false;
+  if(msg){ msg.style.color='#27AE60'; msg.textContent=T('Signed in as '+currentUserEmail+' — no separate code needed.','साइन इन: '+currentUserEmail+' — अलग कोड की आवश्यकता नहीं।'); }
+}
+
 function cpSendOtp(){
   const email=document.getElementById('cpEmail').value.trim();
   const msg=document.getElementById('cpMsg');
@@ -2324,6 +2356,7 @@ function verifyOtp(){
     closeModal('authModal');
     syncOrdersFromServer(email);
     loadChannelPartnerStatus();
+    prefillPartnerFormFromSession();
     if(pendingCeiLpiCheckout){
       pendingCeiLpiCheckout=false;
       openKachaBillModal();
