@@ -2508,8 +2508,8 @@ function selectReferLeadSubTab(tab){
 
 // Only the customers THIS partner personally submitted via the form
 // above — not everyone who's ever used their code (that fuller list
-// already lives in "My Channel Partner ID"). Deliberately no order ID
-// or registration number shown here, exactly as requested.
+// already lives in "My Channel Partner ID"). Shows the registration
+// number (or order number, if it's ever an order-type entry) for each.
 function renderMyCustomers(){
   const box=document.getElementById('rlCustomersList');
   const mine=myReferralLeads.filter(l=>l.referredByPartner);
@@ -2521,9 +2521,13 @@ function renderMyCustomers(){
     const statusLabel = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
     const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
     const when=new Date(l.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    const numberLine = l.registrationNumber
+      ? (T('Registration Number','पंजीकरण नंबर')+': '+l.registrationNumber)
+      : (l.orderNumber||l.receiptNumber ? (T('Order Number','ऑर्डर नंबर')+': '+(l.orderNumber||l.receiptNumber)) : '');
     return '<div style="border:1px solid rgba(173,124,60,0.3);border-radius:8px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
       '<div><span style="font-size:0.95rem;color:var(--ink);font-weight:600;">'+(l.customerName||'—')+'</span><br>'+
       '<span style="font-size:0.8rem;color:var(--gold-soft);">'+l.service+'</span><br>'+
+      (numberLine ? '<span style="font-size:0.78rem;color:var(--gold-soft);">'+numberLine+'</span><br>' : '')+
       '<span style="font-size:0.76rem;color:var(--ink);opacity:0.65;">'+when+'</span></div>'+
       '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
       '</div>';
