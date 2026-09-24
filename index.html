@@ -2391,14 +2391,27 @@ function loadChannelPartnerStatus(){
       if(!data || !data.isPartner){
         tabBtn.style.display='none';
         if(referTabBtn) referTabBtn.style.display='none';
-        if(becomePartnerLink) becomePartnerLink.style.display='';
+        if(becomePartnerLink){
+          becomePartnerLink.style.display='';
+          becomePartnerLink.style.opacity='';
+          becomePartnerLink.style.pointerEvents='';
+          becomePartnerLink.style.cursor='';
+          becomePartnerLink.title='';
+        }
         return;
       }
       tabBtn.style.display='inline-block';
       if(referTabBtn) referTabBtn.style.display='inline-block';
-      // Already a partner — there's nothing to register again, so this
-      // entry point disappears entirely rather than just being disabled.
-      if(becomePartnerLink) becomePartnerLink.style.display='none';
+      // Already a partner — stays visible in the nav (not hidden), but
+      // grayed out and unclickable, since there's nothing left to
+      // register again.
+      if(becomePartnerLink){
+        becomePartnerLink.style.display='';
+        becomePartnerLink.style.opacity='0.4';
+        becomePartnerLink.style.pointerEvents='none';
+        becomePartnerLink.style.cursor='default';
+        becomePartnerLink.title=T('You\'re already a Channel Partner','आप पहले से ही चैनल पार्टनर हैं');
+      }
       myPartnerId=data.partnerId; // used by submitReferredLead() to auto-apply this partner's own code
       myReferralLeads=data.referralLeads||[]; // cached for the "My Customers" sub-tab
       if(!box) return;
