@@ -859,6 +859,13 @@
           <span>Major Activity: Services</span><br>
           <span>Registered: 01/05/2026</span></p>
         </div>
+        <div class="card" style="text-align:left;">
+          <h3 style="font-size:1rem;">🏛️ Certificate of Registration (Labour Department, Uttar Pradesh)</h3>
+          <p style="font-size:0.85rem;"><span>Certificate No.:</span> <b>UPCLA28002282</b><br>
+          <span>Issued under: Contract Labour (Regulation and Abolition) Act, 1970</span><br>
+          <span>Nature of Work: Astrological &amp; Spiritualist Activities</span><br>
+          <span>Registered: 21/09/2026</span></p>
+        </div>
       </div>
     </div>
   </section>
@@ -1797,6 +1804,11 @@
 
     <div id="ptab-referlead" style="display:none;">
       <h4 style="color:var(--gold);font-family:var(--serif-b);margin:10px 0 10px;font-size:0.95rem;">Refer a Customer</h4>
+      <div class="row" style="margin-bottom:10px;">
+        <button type="button" id="rlSubTabSubmit" class="learn-more" onclick="selectReferLeadSubTab('submit')">Submit New</button>
+        <button type="button" id="rlSubTabCustomers" class="learn-more" onclick="selectReferLeadSubTab('customers')">My Customers</button>
+      </div>
+      <div id="rlSubmitPane">
       <p class="note" style="margin-top:0;">If someone you know would rather not fill in their own details, submit it here on their behalf — your referral code is applied automatically.</p>
       <div class="field"><label>Customer's Full Name</label><input type="text" id="rlName"></div>
       <div class="field"><label>Customer's Mobile Number</label><input type="tel" id="rlMobile"></div>
@@ -1823,6 +1835,10 @@
       <div class="field"><label>Notes / Concern (optional)</label><textarea rows="3" id="rlPurpose"></textarea></div>
       <button type="button" class="btn" style="margin-top:10px;" onclick="submitReferredLead()">Submit</button>
       <p class="form-msg" id="rlMsg"></p>
+      </div>
+      <div id="rlCustomersPane" style="display:none;">
+        <div id="rlCustomersList"><p class="note">Loading…</p></div>
+      </div>
     </div>
 
     <div id="ptab-support" style="display:none;">
@@ -2033,6 +2049,8 @@ let userOrders=[]; // {label, service, when}
 let pendingRegistrationName=null;
 let pendingCeiLpiCheckout=false; // set when someone clicks "Check CEI & LPI Now" before signing in
 let myPartnerId=null; // this signed-in user's own Channel Partner ID, once loadChannelPartnerStatus() confirms they are one — used by submitReferredLead()
+let myReferralLeads=[]; // cached from loadChannelPartnerStatus(), reused by the "My Customers" sub-tab without a second fetch
+let myReferredCustomersCache=[]; // leads submitted via "Refer a Customer" specifically — filtered from the dashboard fetch, reused by the "My Customers" sub-tab so it doesn't need its own network call
 let pendingCartItem=null; // {name, price} awaiting registration details before adding to cart
 let pendingDirectCartItem=null; // {name, price} for survey purchases — skips registration entirely
 let pendingNotifyItem=null; // set when someone clicks "Notify Me" on an out-of-stock item
@@ -2382,6 +2400,7 @@ function loadChannelPartnerStatus(){
       // entry point disappears entirely rather than just being disabled.
       if(becomePartnerLink) becomePartnerLink.style.display='none';
       myPartnerId=data.partnerId; // used by submitReferredLead() to auto-apply this partner's own code
+      myReferralLeads=data.referralLeads||[]; // cached for the "My Customers" sub-tab
       if(!box) return;
       // Every referral shows up here, whatever its state — CEI & LPI
       // moves to "Confirmed" automatically the moment Razorpay confirms
@@ -2389,6 +2408,7 @@ function loadChannelPartnerStatus(){
       // marks them Confirmed or Not Converted from the admin page.
       const orders=data.referralOrders||[];
       const leads=data.referralLeads||[];
+      myReferredCustomersCache=leads.filter(l=>l.referredByPartner);
       const totalReferrals=orders.length+leads.length;
       const confirmed=orders.filter(o=>o.status==='paid').length + leads.filter(l=>l.status==='confirmed').length;
       let html='<div style="border:1px solid rgba(173,124,60,0.4);padding:14px;border-radius:6px;margin-bottom:14px;">'+
@@ -2451,7 +2471,9 @@ function submitReferredLead(){
       mobile: document.getElementById('rlMobile').value.trim(),
       purpose: document.getElementById('rlPurpose').value.trim(),
       address: document.getElementById('rlAddress').value.trim(),
-      referralCode: myPartnerId
+      referralCode: myPartnerId,
+      viaPartnerReferral: true,
+      viaPartnerReferral: true
     })
   })
   .then(r=>r.json().then(data=>({status:r.status, data})))
@@ -2462,17 +2484,50 @@ function submitReferredLead(){
       return;
     }
     msg.style.color='#1E7E34';
-    msg.textContent=T('Submitted — you\'ll see it under your referrals once it\'s reviewed.','सबमिट हो गया — समीक्षा के बाद यह आपके रेफरल में दिखेगा।')+(data.registrationNumber?(' '+T('Registration Number','पंजीकरण नंबर')+': '+data.registrationNumber+'.'):'');
+    msg.textContent=T('Submitted — you\'ll see this customer under "My Customers" once it\'s reviewed.','सबमिट हो गया — समीक्षा के बाद यह ग्राहक "मेरे ग्राहक" में दिखेगा।');
     document.getElementById('rlName').value='';
     document.getElementById('rlMobile').value='';
     document.getElementById('rlEmail').value='';
     document.getElementById('rlAddress').value='';
     document.getElementById('rlPurpose').value='';
+    loadChannelPartnerStatus();
   })
   .catch(()=>{
     btn.textContent=originalText; btn.disabled=false;
     msg.textContent=T('Could not reach the server.','सर्वर से संपर्क नहीं हो सका।');
   });
+}
+
+function selectReferLeadSubTab(tab){
+  document.getElementById('rlSubmitPane').style.display = (tab==='submit') ? 'block' : 'none';
+  document.getElementById('rlCustomersPane').style.display = (tab==='customers') ? 'block' : 'none';
+  document.getElementById('rlSubTabSubmit').classList.toggle('active', tab==='submit');
+  document.getElementById('rlSubTabCustomers').classList.toggle('active', tab==='customers');
+  if(tab==='customers') renderMyCustomers();
+}
+
+// Only the customers THIS partner personally submitted via the form
+// above — not everyone who's ever used their code (that fuller list
+// already lives in "My Channel Partner ID"). Deliberately no order ID
+// or registration number shown here, exactly as requested.
+function renderMyCustomers(){
+  const box=document.getElementById('rlCustomersList');
+  const mine=myReferralLeads.filter(l=>l.referredByPartner);
+  if(mine.length===0){
+    box.innerHTML='<p class="note">'+T('You haven\'t referred any customers yet.','आपने अभी तक कोई ग्राहक रेफर नहीं किया है।')+'</p>';
+    return;
+  }
+  box.innerHTML=mine.map(l=>{
+    const statusLabel = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
+    const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
+    const when=new Date(l.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    return '<div style="border:1px solid rgba(173,124,60,0.3);border-radius:8px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+      '<div><span style="font-size:0.95rem;color:var(--ink);font-weight:600;">'+(l.customerName||'—')+'</span><br>'+
+      '<span style="font-size:0.8rem;color:var(--gold-soft);">'+l.service+'</span><br>'+
+      '<span style="font-size:0.76rem;color:var(--ink);opacity:0.65;">'+when+'</span></div>'+
+      '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
+      '</div>';
+  }).join('');
 }
 
 function selectProfileTab(tab){
