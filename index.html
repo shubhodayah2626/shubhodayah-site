@@ -745,8 +745,8 @@
     <a data-page="shop" onclick="goPage('shop')" data-i18n>Shop</a>
     <a data-page="contact" onclick="goPage('contact')" data-i18n>Contact</a>
     <a data-page="analysis" onclick="goPage('analysis')" data-i18n>CEI &amp; LPI Analysis</a>
-    <a data-page="premium" onclick="goPage('premium')">Premium Consultation</a>
-    <a data-page="partner" onclick="goPage('partner')">Become a Channel Partner</a>
+    <a data-page="premium" onclick="goPage('premium')">Consultation Structure</a>
+    <a data-page="partner" id="becomePartnerNavLink" onclick="goPage('partner')">Become a Channel Partner</a>
     <a class="nav-cta" onclick="openAuth()" id="authNavLink" data-i18n>Sign In</a>
     <span class="lang-toggle">
       <button class="lang-btn active" id="langBtnEN" onclick="setLanguage('en')">EN</button>
@@ -833,7 +833,7 @@
       </div>
       <div class="card reveal">
         <div class="icon">🕉️</div>
-        <h3>Premium Consultation</h3>
+        <h3>Consultation Structure</h3>
         <p>A tiered path of personal guidance — from an introductory reading to a fully private Royal/NRI consultation.</p>
         <button class="learn-more" onclick="goPage('premium')">Learn More</button>
       </div>
@@ -1311,8 +1311,8 @@
       <section>
         <div class="solar-system page-solar" aria-hidden="true"><div class="sun"></div><div class="orbit orbit-mercury"><div class="planet" style="width:7px;height:7px;background:#C7BEB4;left:-3.5px;top:calc(50% - 3.5px);"></div></div><div class="orbit orbit-venus"><div class="planet" style="width:10px;height:10px;background:#F0D9A8;left:-5px;top:calc(50% - 5px);"></div></div><div class="orbit orbit-earth"><div class="planet" style="width:11px;height:11px;background:#6FA3D4;left:-5.5px;top:calc(50% - 5.5px);"></div></div><div class="orbit orbit-mars"><div class="planet" style="width:8.5px;height:8.5px;background:#D6754D;left:-4.25px;top:calc(50% - 4.25px);"></div></div><div class="orbit orbit-jupiter"><div class="planet" style="width:22px;height:22px;background:#E2C69A;left:-11px;top:calc(50% - 11px);"></div></div><div class="orbit orbit-saturn"><div class="planet ringed" style="width:18px;height:18px;background:#F0DDAE;left:-9px;top:calc(50% - 9px);"></div></div><div class="orbit orbit-uranus"><div class="planet" style="width:13px;height:13px;background:#B8E4E4;left:-6.5px;top:calc(50% - 6.5px);"></div></div><div class="orbit orbit-neptune"><div class="planet" style="width:13px;height:13px;background:#5F86C7;left:-6.5px;top:calc(50% - 6.5px);"></div></div></div>
         <div class="reveal">
-          <span class="eyebrow">Premium Consultation</span>
-          <h1 style="font-size:clamp(2rem,4.5vw,3rem);">Shubhodayah — Premium Consultation Structure</h1>
+          <span class="eyebrow">Consultation Structure</span>
+          <h1 style="font-size:clamp(2rem,4.5vw,3rem);">Shubhodayah — Consultation Structure</h1>
           <p class="hero-tagline" style="margin-bottom:16px;">A tiered path of personal guidance — from an introductory reading to a fully private, elite consultation, choose the depth that matches where you are.</p>
         </div>
 
@@ -1329,7 +1329,7 @@
           </table>
           <p class="note" style="margin-top:16px;">Fees shown are indicative. The final cost may vary according to the details of your case — where a case is more complex or requires deeper analysis and extended remedial work, the fee for the same level may be higher. The exact amount is confirmed with you before anything begins.</p>
           <p style="font-size:0.88rem;margin-top:10px;">Payment for these programs is coordinated over email once our team connects with you after registration.</p>
-          <button class="btn" style="margin-top:18px;" onclick="startRegistration('Premium Consultation')">Register</button>
+          <button class="btn" style="margin-top:18px;" onclick="startRegistration('Consultation Structure')">Register</button>
         </div>
       </section>
     </div>
@@ -1762,6 +1762,7 @@
       <button data-ptab="orders" onclick="selectProfileTab('orders')">My Orders</button>
       <button data-ptab="registrations" onclick="selectProfileTab('registrations')">My Registrations</button>
       <button data-ptab="partner" id="partnerTabBtn" onclick="selectProfileTab('partner')" style="display:none;">My Channel Partner ID</button>
+      <button data-ptab="referlead" id="referLeadTabBtn" onclick="selectProfileTab('referlead')" style="display:none;">Refer a Customer</button>
       <button data-ptab="support" onclick="selectProfileTab('support')">Help & Support</button>
     </div>
 
@@ -1792,6 +1793,27 @@
     <div id="ptab-partner" style="display:none;">
       <h4 style="color:var(--gold);font-family:var(--serif-b);margin:10px 0 10px;font-size:0.95rem;">My Channel Partner ID</h4>
       <div id="partnerDashboard"></div>
+    </div>
+
+    <div id="ptab-referlead" style="display:none;">
+      <h4 style="color:var(--gold);font-family:var(--serif-b);margin:10px 0 10px;font-size:0.95rem;">Refer a Customer</h4>
+      <p class="note" style="margin-top:0;">If someone you know would rather not fill in their own details, submit it here on their behalf — your referral code is applied automatically.</p>
+      <div class="field"><label>Customer's Full Name</label><input type="text" id="rlName"></div>
+      <div class="field"><label>Customer's Mobile Number</label><input type="tel" id="rlMobile"></div>
+      <div class="field"><label>Customer's Email</label><input type="email" id="rlEmail"></div>
+      <div class="field"><label>Service</label>
+        <select id="rlService">
+          <option value="Consultation Structure">Consultation Structure</option>
+          <option value="Rudra Dowsing & Vastu Appointment">Rudra Dowsing & Vastu Appointment</option>
+          <option value="Dosh Nivaran">Dosh Nivaran</option>
+          <option value="Shubhodayah Unique ID">Shubhodayah Unique ID</option>
+          <option value="Sutra Service — Personalized/General">Sutra Service</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Notes / Concern (optional)</label><textarea rows="3" id="rlPurpose"></textarea></div>
+      <button type="button" class="btn" style="margin-top:10px;" onclick="submitReferredLead()">Submit</button>
+      <p class="form-msg" id="rlMsg"></p>
     </div>
 
     <div id="ptab-support" style="display:none;">
@@ -2001,6 +2023,7 @@ let currentUserEmail='';
 let userOrders=[]; // {label, service, when}
 let pendingRegistrationName=null;
 let pendingCeiLpiCheckout=false; // set when someone clicks "Check CEI & LPI Now" before signing in
+let myPartnerId=null; // this signed-in user's own Channel Partner ID, once loadChannelPartnerStatus() confirms they are one — used by submitReferredLead()
 let pendingCartItem=null; // {name, price} awaiting registration details before adding to cart
 let pendingDirectCartItem=null; // {name, price} for survey purchases — skips registration entirely
 let pendingNotifyItem=null; // set when someone clicks "Notify Me" on an out-of-stock item
@@ -2026,6 +2049,7 @@ function restoreSession(){
       var navLink=document.getElementById('authNavLink');
       if(navLink) navLink.textContent=T('Hi, ','नमस्ते, ')+parsed.name.split(' ')[0];
       if(typeof syncOrdersFromServer==='function') syncOrdersFromServer(parsed.email);
+      if(typeof loadChannelPartnerStatus==='function') loadChannelPartnerStatus();
     }
   }catch(e){ /* corrupted value — ignore, just stays signed out */ }
 }
@@ -2227,6 +2251,7 @@ function verifyOtp(){
     document.getElementById('authNavLink').textContent=T('Hi, ','नमस्ते, ')+name.split(' ')[0];
     closeModal('authModal');
     syncOrdersFromServer(email);
+    loadChannelPartnerStatus();
     if(pendingCeiLpiCheckout){
       pendingCeiLpiCheckout=false;
       openKachaBillModal();
@@ -2259,18 +2284,22 @@ function openProfile(){
   }else{
     const total=userOrders.reduce((s,o)=>s+(o.amount||0),0);
     box.innerHTML=`
-      <div style="display:flex;justify-content:space-between;padding-bottom:12px;margin-bottom:8px;border-bottom:1px solid rgba(173,124,60,0.35);">
+      <div style="display:flex;justify-content:space-between;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid rgba(173,124,60,0.35);">
         <span style="font-size:0.85rem;color:var(--gold-soft);">${T('Total across all orders','सभी ऑर्डर का कुल योग')}</span>
         <span style="font-size:0.9rem;color:var(--gold-soft);font-family:var(--serif-b);">${total>0?('₹'+total.toLocaleString('en-IN')):'—'}</span>
       </div>
     ` + userOrders.map((o,i)=>`
-      <div style="border-bottom:1px solid rgba(173,124,60,0.25);padding:10px 0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleOrderDetail(${i})">
-          <span style="font-size:0.9rem;color:var(--ink);">${o.label}</span>
-          <span style="font-size:0.78rem;color:var(--gold-soft);text-align:right;">${o.when}<br><span class="order-status">${o.status}</span></span>
+      <div style="border:1px solid rgba(173,124,60,0.3);border-radius:8px;padding:16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer;" onclick="toggleOrderDetail(${i})">
+          <div>
+            <span style="font-size:1rem;color:var(--ink);font-weight:600;">${o.label}</span><br>
+            <span style="font-size:0.82rem;color:var(--gold-soft);">${T('Order Number','ऑर्डर नंबर')}: ${o.orderNumber||o.receiptNumber||'—'}</span><br>
+            <span style="font-size:0.78rem;color:var(--ink);opacity:0.65;">${o.when}</span>
+          </div>
+          <span class="order-status" style="font-size:0.78rem;color:var(--gold-soft);white-space:nowrap;">${o.status}</span>
         </div>
-        ${o.amount ? `<p style="font-size:0.82rem;color:var(--gold-soft);margin-top:4px;">₹${o.amount.toLocaleString('en-IN')}</p>` : ''}
-        <div id="orderDetail${i}" style="display:none;margin-top:8px;font-size:0.82rem;color:var(--ink);opacity:0.8;line-height:1.6;">
+        ${o.amount ? `<p style="font-size:0.88rem;color:var(--gold-soft);margin-top:10px;font-weight:600;">₹${o.amount.toLocaleString('en-IN')}</p>` : ''}
+        <div id="orderDetail${i}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(173,124,60,0.2);font-size:0.85rem;color:var(--ink);opacity:0.85;line-height:1.7;">
           ${o.details ? Object.entries(o.details).filter(([k,v])=>v).map(([k,v])=>`<div><b style="color:var(--gold);">${k}:</b> ${v}</div>`).join('') : ''}
         </div>
       </div>`).join('');
@@ -2281,7 +2310,7 @@ function openProfile(){
   loadChannelPartnerStatus();
   loadMyRegistrations();
 }
-// Fetches this customer's own service registrations (Premium Consultation,
+// Fetches this customer's own service registrations (Consultation Structure,
 // Rudra Dowsing, Dosh Nivaran, Unique ID, Sutra, etc.) — shown in their
 // own "My Registrations" tab, separate from "My Orders" (which is only
 // the live-payment CEI & LPI orders). Each shows whatever status it's
@@ -2303,8 +2332,15 @@ function loadMyRegistrations(){
           : (reg.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending — Awaiting Confirmation','लंबित — पुष्टि की प्रतीक्षा'));
         const statusColor = reg.status==='confirmed' ? '#1E7E34' : (reg.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
         const when=new Date(reg.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-        return '<div style="border-bottom:1px solid rgba(173,124,60,0.25);padding:10px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
-          '<span style="font-size:0.9rem;color:var(--ink);">'+reg.service+'<br><span style="font-size:0.78rem;opacity:0.65;">'+when+(reg.registrationNumber?' · '+reg.registrationNumber:'')+'</span></span>'+
+        // A bill only exists once the registration is actually confirmed
+        // (there's nothing to bill for a pending or not-converted one).
+        const billLine = (reg.status==='confirmed' && reg.billPdfUrl)
+          ? '<br><a href="'+OTP_BACKEND_URL+reg.billPdfUrl+'" target="_blank" style="color:var(--gold);font-size:0.82rem;">'+T('View Bill','बिल देखें')+'</a>'
+          : '';
+        return '<div style="border:1px solid rgba(173,124,60,0.3);border-radius:8px;padding:16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+          '<div><span style="font-size:1rem;color:var(--ink);font-weight:600;">'+reg.service+'</span><br>'+
+          '<span style="font-size:0.82rem;color:var(--gold-soft);">'+T('Registration Number','पंजीकरण नंबर')+': '+(reg.registrationNumber||'—')+'</span><br>'+
+          '<span style="font-size:0.78rem;color:var(--ink);opacity:0.65;">'+when+'</span>'+billLine+'</div>'+
           '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
           '</div>';
       }).join('');
@@ -2318,13 +2354,26 @@ function loadMyRegistrations(){
 // aren't partners — this is expected, not an error.
 function loadChannelPartnerStatus(){
   const tabBtn=document.getElementById('partnerTabBtn');
+  const referTabBtn=document.getElementById('referLeadTabBtn');
+  const becomePartnerLink=document.getElementById('becomePartnerNavLink');
   const box=document.getElementById('partnerDashboard');
-  if(!tabBtn || !box || !currentUserEmail) return;
+  if(!tabBtn || !currentUserEmail) return;
   fetch(OTP_BACKEND_URL+'/api/channel-partner/dashboard?email='+encodeURIComponent(currentUserEmail))
     .then(r=>r.json())
     .then(data=>{
-      if(!data || !data.isPartner){ tabBtn.style.display='none'; return; }
+      if(!data || !data.isPartner){
+        tabBtn.style.display='none';
+        if(referTabBtn) referTabBtn.style.display='none';
+        if(becomePartnerLink) becomePartnerLink.style.display='';
+        return;
+      }
       tabBtn.style.display='inline-block';
+      if(referTabBtn) referTabBtn.style.display='inline-block';
+      // Already a partner — there's nothing to register again, so this
+      // entry point disappears entirely rather than just being disabled.
+      if(becomePartnerLink) becomePartnerLink.style.display='none';
+      myPartnerId=data.partnerId; // used by submitReferredLead() to auto-apply this partner's own code
+      if(!box) return;
       // Every referral shows up here, whatever its state — CEI & LPI
       // moves to "Confirmed" automatically the moment Razorpay confirms
       // payment; services stay "Pending" until Shubh's father manually
@@ -2356,9 +2405,10 @@ function loadChannelPartnerStatus(){
         html+=leads.map(l=>{
           const statusLabel = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
           const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
+          const leadBillLink = (l.status==='confirmed' && l.billPdfUrl) ? ' · <a href="'+OTP_BACKEND_URL+l.billPdfUrl+'" target="_blank" style="color:var(--gold);">'+T('View Bill','बिल देखें')+'</a>' : '';
           return '<div style="border-bottom:1px solid rgba(173,124,60,0.25);padding:8px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
             '<span style="font-size:0.85rem;color:var(--ink);">'+(l.customerName||'—')+' <span style="opacity:0.65;">('+l.service+')</span>'+
-            '<br><span style="font-size:0.74rem;color:var(--ink);opacity:0.6;">'+fmtPartnerDate(l.date)+(l.registrationNumber?' · '+l.registrationNumber:'')+'</span></span>'+
+            '<br><span style="font-size:0.74rem;color:var(--ink);opacity:0.6;">'+fmtPartnerDate(l.date)+(l.registrationNumber?' · '+l.registrationNumber:'')+leadBillLink+'</span></span>'+
             '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
             '</div>';
         }).join('');
@@ -2367,8 +2417,55 @@ function loadChannelPartnerStatus(){
     })
     .catch(()=>{ tabBtn.style.display='none'; });
 }
+
+// A Channel Partner submitting a lead directly on a customer's behalf —
+// reuses the exact same backend endpoint the public registration form
+// uses, just with the fields collected here instead, and the partner's
+// own code applied automatically (never typed, never guessed).
+function submitReferredLead(){
+  const msg=document.getElementById('rlMsg');
+  msg.className='form-msg'; msg.textContent='';
+  const name=document.getElementById('rlName').value.trim();
+  const email=document.getElementById('rlEmail').value.trim();
+  if(!myPartnerId){ msg.textContent=T('Could not confirm your partner status — please reopen your profile and try again.','आपकी पार्टनर स्थिति की पुष्टि नहीं हो सकी — कृपया अपनी प्रोफ़ाइल फिर से खोलें और पुनः प्रयास करें।'); return; }
+  if(!name || !email){ msg.textContent=T('Please enter the customer\'s name and email.','कृपया ग्राहक का नाम एवं ईमेल दर्ज करें।'); return; }
+  const btn=document.querySelector('#ptab-referlead .btn');
+  const originalText=btn.textContent;
+  btn.textContent=T('Submitting...','सबमिट किया जा रहा है...'); btn.disabled=true;
+  fetch(OTP_BACKEND_URL+'/api/submit-registration',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      service: document.getElementById('rlService').value,
+      name,
+      email,
+      mobile: document.getElementById('rlMobile').value.trim(),
+      purpose: document.getElementById('rlPurpose').value.trim(),
+      referralCode: myPartnerId
+    })
+  })
+  .then(r=>r.json().then(data=>({status:r.status, data})))
+  .then(({status,data})=>{
+    btn.textContent=originalText; btn.disabled=false;
+    if(status!==200 || !data.ok){
+      msg.textContent=data.error || T('Could not submit right now. Please try again.','अभी सबमिट नहीं हो सका। कृपया पुनः प्रयास करें।');
+      return;
+    }
+    msg.style.color='#1E7E34';
+    msg.textContent=T('Submitted — you\'ll see it under your referrals once it\'s reviewed.','सबमिट हो गया — समीक्षा के बाद यह आपके रेफरल में दिखेगा।')+(data.registrationNumber?(' '+T('Registration Number','पंजीकरण नंबर')+': '+data.registrationNumber+'.'):'');
+    document.getElementById('rlName').value='';
+    document.getElementById('rlMobile').value='';
+    document.getElementById('rlEmail').value='';
+    document.getElementById('rlPurpose').value='';
+  })
+  .catch(()=>{
+    btn.textContent=originalText; btn.disabled=false;
+    msg.textContent=T('Could not reach the server.','सर्वर से संपर्क नहीं हो सका।');
+  });
+}
+
 function selectProfileTab(tab){
-  ['details','orders','registrations','partner','support'].forEach(t=>{
+  ['details','orders','registrations','partner','referlead','support'].forEach(t=>{
     document.getElementById('ptab-'+t).style.display = (t===tab) ? 'block' : 'none';
   });
   document.querySelectorAll('#profileModal .service-tabs button').forEach(b=>{
@@ -2533,7 +2630,8 @@ function syncOrdersFromServer(email){
         }
         userOrders.push({
           receiptNumber:o.receiptNumber,
-          label:T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण')+' — '+o.receiptNumber,
+          orderNumber:o.receiptNumber,
+          label:T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण'),
           when:o.paidAt?new Date(o.paidAt).toLocaleDateString():'',
           status:o.reportPdfUrl?T('Report Ready','रिपोर्ट तैयार है'):(o.reportOtpUsed?T('Unlocked — Generating Report','अनलॉक किया गया — रिपोर्ट तैयार हो रही है'):T('Paid — Awaiting Portal Unlock','भुगतान हो गया — पोर्टल अनलॉक लंबित')),
           amount:o.amount?Math.round(o.amount/100):null,
@@ -2587,7 +2685,7 @@ function toggleRegCategory(serviceName){
       T('Buried Gold & Silver Search','दबे सोने-चांदी की खोज'),
       T('Underground Water Search','भूमिगत जल खोज'),
     ];
-  } else if(serviceName==='Premium Consultation'){
+  } else if(serviceName==='Consultation Structure'){
     label.textContent=T('Which consultation level are you interested in?','आप किस परामर्श स्तर में रुचि रखते हैं?');
     options=[
       T('Level 1 — Shubhodayah Prarambh Consultation (₹11,000)','स्तर 1 — शुभोदय प्रारंभ परामर्श (₹11,000)'),
@@ -2713,25 +2811,9 @@ function submitRegistration(){
       msg.textContent=data.error || T('Could not submit right now. Please try again, or call 9519408527.','अभी सबमिट नहीं हो सका। कृपया पुनः प्रयास करें, या 9519408527 पर कॉल करें।');
       return;
     }
-    userOrders.unshift({
-      label: serviceName+' — Registration',
-      when: new Date().toLocaleDateString(),
-      status: T('Pending Review','समीक्षा हेतु लंबित'),
-      amount: null,
-      details: pendingGridFlow ? {
-        'Location / Area': payload.location,
-        'House Number': payload.houseNo,
-        'PIN Code': payload.pincode,
-        'Mobile': payload.mobile,
-        'Concern': payload.purpose,
-      } : {
-        'Date of Birth': payload.dob,
-        'Time of Birth': payload.tob,
-        'Place of Birth': payload.pob,
-        'Mobile': payload.mobile,
-        'Concern': payload.purpose,
-      }
-    });
+    // Registration now lives in "My Registrations" (a separate tab,
+    // fetched fresh from the database) — not pushed into userOrders
+    // here, so it never mixes with CEI & LPI orders.
     if(pendingCartItem){
       addToCart(pendingCartItem.name, pendingCartItem.price);
       pendingCartItem=null;
@@ -3281,6 +3363,64 @@ selectShopTab('itru');
    Long descriptive paragraphs (About, service explainer text) are not
    machine-translated here — this is an interface-level toggle. */
 const EN_HI = {
+  /* ---- Consultation Structure page ---- */
+  'Consultation Structure':'परामर्श संरचना',
+  'Shubhodayah — Consultation Structure':'शुभोदयः — परामर्श संरचना',
+  'A tiered path of personal guidance — from an introductory reading to a fully private, elite consultation, choose the depth that matches where you are.':
+    'व्यक्तिगत मार्गदर्शन का एक स्तरीय मार्ग — एक परिचयात्मक पठन से लेकर पूर्णतः निजी, विशिष्ट परामर्श तक, अपनी आवश्यकता के अनुसार गहराई चुनें।',
+  'Level':'स्तर', 'Program':'कार्यक्रम', 'Fee':'शुल्क',
+  'Fees shown are indicative. The final cost may vary according to the details of your case — where a case is more complex or requires deeper analysis and extended remedial work, the fee for the same level may be higher. The exact amount is confirmed with you before anything begins.':
+    'दर्शाई गई फीस अनुमानित है। आपके मामले के विवरण के अनुसार अंतिम शुल्क भिन्न हो सकता है — यदि मामला अधिक जटिल है या गहन विश्लेषण एवं विस्तृत उपचारात्मक कार्य की आवश्यकता है, तो उसी स्तर के लिए शुल्क अधिक हो सकता है। कार्य आरंभ होने से पहले सटीक राशि की पुष्टि आपसे की जाएगी।',
+  'Payment for these programs is coordinated over email once our team connects with you after registration.':
+    'पंजीकरण के बाद हमारी टीम आपसे संपर्क करने पर इन कार्यक्रमों के भुगतान की व्यवस्था ईमेल पर की जाएगी।',
+
+  /* ---- Become a Channel Partner page ---- */
+  'Join Us':'हमसे जुड़ें',
+  'Become a Channel Partner':'चैनल पार्टनर बनें',
+  'Help more people discover authentic, time-tested Vedic guidance — and be part of bringing Shubhodayah\'s work to your own circle.':
+    'अधिक लोगों को प्रामाणिक, समय-परखा वैदिक मार्गदर्शन तक पहुँचाने में मदद करें — और शुभोदयः के कार्य को अपने परिचितों तक पहुँचाने का हिस्सा बनें।',
+  'Why Become a Channel Partner?':'चैनल पार्टनर क्यों बनें?',
+  'As a Channel Partner, you become a trusted bridge between the people you know and Shubhodayah\'s Vedic astrology, Vastu and cosmic energy alignment services. You\'ll receive your own personal referral code to share, and a private dashboard where you can see, at any time, exactly who you\'ve connected with Shubhodayah and how those referrals are progressing.':
+    'चैनल पार्टनर के रूप में, आप अपने परिचितों और शुभोदयः की वैदिक ज्योतिष, वास्तु एवं कॉस्मिक एनर्जी एलाइनमेंट सेवाओं के बीच एक विश्वसनीय सेतु बनते हैं। आपको साझा करने के लिए अपना व्यक्तिगत रेफरल कोड मिलेगा, तथा एक निजी डैशबोर्ड जहाँ आप किसी भी समय देख सकते हैं कि आपने शुभोदयः से किन-किन लोगों को जोड़ा है और वे रेफरल किस स्थिति में हैं।',
+  'Register as a Channel Partner':'चैनल पार्टनर के रूप में पंजीकरण करें',
+  'Full Name':'पूरा नाम',
+  'Age':'आयु',
+  'Postal Address':'डाक पता',
+  'Occupation':'व्यवसाय',
+  'Mobile Number':'मोबाइल नंबर',
+  'These payment details are collected now so we can pay out your referral commission later — nothing is charged to you. Fill in either your UPI details, or your bank account details — whichever you prefer.':
+    'यह भुगतान विवरण अभी इसलिए लिया जा रहा है ताकि बाद में आपको रेफरल कमीशन दिया जा सके — आपसे कुछ भी शुल्क नहीं लिया जाएगा। अपनी UPI जानकारी या बैंक खाता जानकारी, जो भी आपको उचित लगे, भर दें।',
+  'Option A — UPI':'विकल्प A — UPI',
+  'Option B — Bank Account':'विकल्प B — बैंक खाता',
+  'Payment App (optional)':'पेमेंट ऐप (वैकल्पिक)',
+  'UPI ID (optional)':'UPI आईडी (वैकल्पिक)',
+  'Bank Account Holder Name (optional)':'बैंक खाता धारक का नाम (वैकल्पिक)',
+  'Bank Account Number (optional)':'बैंक खाता संख्या (वैकल्पिक)',
+  'IFSC Code (optional)':'IFSC कोड (वैकल्पिक)',
+  'Bank Name (optional)':'बैंक का नाम (वैकल्पिक)',
+  'PIN Code (optional)':'पिन कोड (वैकल्पिक)',
+  'Email':'ईमेल',
+  'Send Code':'कोड भेजें',
+  'Enter the 6-digit code sent to your email':'अपने ईमेल पर भेजा गया 6-अंकों का कोड दर्ज करें',
+  'Verify':'सत्यापित करें',
+  'Register as Channel Partner':'चैनल पार्टनर के रूप में पंजीकरण करें',
+  'You\'re registered!':'आपका पंजीकरण हो गया है!',
+  'Your Channel Partner ID is:':'आपका चैनल पार्टनर आईडी है:',
+  'We\'ve also emailed this to you. Share it with people you refer — you can track your referrals anytime from your profile under "My Channel Partner ID".':
+    'यह आपको ईमेल पर भी भेज दिया गया है। इसे उन लोगों के साथ साझा करें जिन्हें आप रेफर करते हैं — आप अपनी प्रोफ़ाइल में "मेरा चैनल पार्टनर आईडी" के अंतर्गत कभी भी अपने रेफरल देख सकते हैं।',
+
+  /* ---- Refer a Customer tab ---- */
+  'Refer a Customer':'ग्राहक को रेफर करें',
+  'If someone you know would rather not fill in their own details, submit it here on their behalf — your referral code is applied automatically.':
+    'यदि आपका कोई परिचित स्वयं अपना विवरण नहीं भरना चाहता, तो उसकी ओर से यहाँ सबमिट करें — आपका रेफरल कोड स्वतः लागू हो जाएगा।',
+  'Customer\'s Full Name':'ग्राहक का पूरा नाम',
+  'Customer\'s Mobile Number':'ग्राहक का मोबाइल नंबर',
+  'Customer\'s Email':'ग्राहक का ईमेल',
+  'Service':'सेवा',
+  'Notes / Concern (optional)':'नोट्स / समस्या (वैकल्पिक)',
+  'Submit':'सबमिट करें',
+
+
   'Vedic Science × Scientific Analysis':'वैदिक विज्ञान × वैज्ञानिक विश्लेषण',
   'Cosmic Energy & Life Performance Analysis':'कॉस्मिक एनर्जी एवं जीवन निष्पादन विश्लेषण',
   'Your birth chart carries a subtle, cosmic energy signature — but knowing where you truly stand in life also depends on how that energy is actually showing up in your day-to-day reality. This analysis brings together two proprietary frameworks, scored out of 90 points each, for a combined 180-point picture of your inner alignment and your outer life.':
