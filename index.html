@@ -1801,14 +1801,23 @@
       <div class="field"><label>Customer's Full Name</label><input type="text" id="rlName"></div>
       <div class="field"><label>Customer's Mobile Number</label><input type="tel" id="rlMobile"></div>
       <div class="field"><label>Customer's Email</label><input type="email" id="rlEmail"></div>
-      <div class="field"><label>Service</label>
+      <div class="field"><label>Customer's Address</label><input type="text" id="rlAddress"></div>
+      <div class="field"><label>Service / Product</label>
         <select id="rlService">
-          <option value="Consultation Structure">Consultation Structure</option>
-          <option value="Rudra Dowsing & Vastu Appointment">Rudra Dowsing & Vastu Appointment</option>
-          <option value="Dosh Nivaran">Dosh Nivaran</option>
-          <option value="Shubhodayah Unique ID">Shubhodayah Unique ID</option>
-          <option value="Sutra Service — Personalized/General">Sutra Service</option>
-          <option value="Other">Other</option>
+          <optgroup label="Services">
+            <option value="Consultation Structure">Consultation Structure</option>
+            <option value="Rudra Dowsing & Vastu Appointment">Rudra Dowsing & Vastu Appointment</option>
+            <option value="Dosh Nivaran">Dosh Nivaran</option>
+            <option value="Shubhodayah Unique ID">Shubhodayah Unique ID</option>
+            <option value="Sutra Service — Personalized/General">Sutra Service</option>
+            <option value="Other">Other</option>
+          </optgroup>
+          <optgroup label="Products — not yet available">
+            <option value="Vastu Grid" disabled>Vastu Grid (Launching Soon)</option>
+            <option value="Alignment Grid" disabled>Alignment Grid (Launching Soon)</option>
+            <option value="ITRU Fragrances" disabled>ITRU Fragrances (Launching Soon)</option>
+            <option value="Siddha Sutra Yantras" disabled>Siddha Sutra Yantras (Launching Soon)</option>
+          </optgroup>
         </select>
       </div>
       <div class="field"><label>Notes / Concern (optional)</label><textarea rows="3" id="rlPurpose"></textarea></div>
@@ -2441,6 +2450,7 @@ function submitReferredLead(){
       email,
       mobile: document.getElementById('rlMobile').value.trim(),
       purpose: document.getElementById('rlPurpose').value.trim(),
+      address: document.getElementById('rlAddress').value.trim(),
       referralCode: myPartnerId
     })
   })
@@ -2456,6 +2466,7 @@ function submitReferredLead(){
     document.getElementById('rlName').value='';
     document.getElementById('rlMobile').value='';
     document.getElementById('rlEmail').value='';
+    document.getElementById('rlAddress').value='';
     document.getElementById('rlPurpose').value='';
   })
   .catch(()=>{
