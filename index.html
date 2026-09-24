@@ -468,6 +468,13 @@
   .field input:focus,.field select:focus,.field textarea:focus{outline:1px solid var(--gold);border-color:var(--gold);}
   .otp-boxes{display:flex;gap:10px;margin-bottom:16px;}
   .otp-boxes input{width:44px;height:52px;text-align:center;font-size:1.3rem;}
+
+  @media(max-width:420px){
+    .modal{padding:28px 16px;}
+    .modal h2{font-size:1.25rem;}
+    .otp-boxes{gap:6px;}
+    .otp-boxes input{width:auto;flex:1;min-width:0;height:46px;font-size:1.1rem;padding:0;}
+  }
   .checks{display:flex;flex-wrap:wrap;gap:10px 18px;margin:6px 0 18px;}
   .checks label{display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#4A3626;}
   .note{font-size:0.78rem;color:#7A6952;margin-top:14px;}
@@ -2086,6 +2093,38 @@ if(document.readyState==='loading'){
   restoreSession();
 }
 
+// If someone was mid-way through entering their OTP (they'd already
+// received the code) and the page got reloaded — very common on
+// Android when switching to Gmail/SMS to read the code and back —
+// this reopens the code-entry step directly, with their email already
+// shown, instead of forcing them to start over and request a brand
+// new code. The code itself is still only valid for its original
+// window (usually 15 minutes), same as always.
+function resumePendingOtpIfAny(){
+  var saved=null;
+  try{ saved=sessionStorage.getItem('shubhodayah_pending_otp'); }catch(e){}
+  if(!saved) return;
+  try{
+    var parsed=JSON.parse(saved);
+    if(parsed && parsed.name && parsed.email){
+      var nameField=document.getElementById('authName');
+      var emailField=document.getElementById('authEmail');
+      if(nameField) nameField.value=parsed.name;
+      if(emailField) emailField.value=parsed.email;
+      var sentTo=document.getElementById('sentToEmail');
+      if(sentTo) sentTo.textContent=parsed.email;
+      document.getElementById('authStep1').style.display='none';
+      document.getElementById('authStep2').style.display='block';
+      openModal('authModal');
+    }
+  }catch(e){ /* corrupted value — ignore */ }
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', resumePendingOtpIfAny);
+}else{
+  resumePendingOtpIfAny();
+}
+
 function goPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
@@ -2245,6 +2284,11 @@ function sendOtp(){
     document.querySelectorAll('#authStep2 .otp-boxes input').forEach((inp,i,arr)=>{
       inp.oninput=()=>{ if(inp.value && arr[i+1]) arr[i+1].focus(); };
     });
+    // Saved so that if Chrome kills/reloads this tab while the phone's
+    // OTP app (Gmail, etc.) is open in the foreground — a very common
+    // Android behavior — coming back doesn't lose progress and force a
+    // fresh restart. See resumePendingOtpIfAny() below.
+    try{ sessionStorage.setItem('shubhodayah_pending_otp', JSON.stringify({name,email})); }catch(e){}
   })
   .catch((err)=>{
     btn.textContent=originalText; btn.disabled=false;
@@ -2275,6 +2319,7 @@ function verifyOtp(){
     currentUserName=name;
     currentUserEmail=email;
     try{ localStorage.setItem('shubhodayah_session', JSON.stringify({name, email})); }catch(e){}
+    try{ sessionStorage.removeItem('shubhodayah_pending_otp'); }catch(e){}
     document.getElementById('authNavLink').textContent=T('Hi, ','नमस्ते, ')+name.split(' ')[0];
     closeModal('authModal');
     syncOrdersFromServer(email);
@@ -3886,6 +3931,7 @@ function translatePass(root){
   root=root||document;
   const selector='nav a, .nav-cta, button, .btn, .learn-more, .notify-btn, h1, h2, h3, h4, p, blockquote, span, b, td, th, .launching-tag, .field label, .contact-row h3, .modal .sub';
   root.querySelectorAll(selector).forEach(el=>{
+    if(el.id==='authNavLink') return; // its text is dynamic (Sign In / Hi, Name) — handled separately below, never by this generic pass
     if(el.children.length>0 && el.tagName!=='SPAN') return; // skip containers with nested elements (keep leafy labels only)
     const text=el.textContent.trim();
     if(!text) return;
@@ -3904,6 +3950,15 @@ function setLanguage(lang){
   document.getElementById('langBtnEN').classList.toggle('active', lang==='en');
   document.getElementById('langBtnHI').classList.toggle('active', lang==='hi');
   translatePass(document);
+  // authNavLink is excluded from translatePass above (its text is
+  // dynamic, not a static dictionary lookup) — refreshed here instead,
+  // for whichever state (signed in or not) is actually current right now.
+  const navLink=document.getElementById('authNavLink');
+  if(navLink){
+    navLink.textContent = isSignedIn
+      ? T('Hi, ','नमस्ते, ')+(currentUserName||'').split(' ')[0]
+      : T('Sign In','साइन इन');
+  }
   if(typeof renderGridShop==='function') renderGridShop();
   if(typeof renderItraShop==='function') renderItraShop();
   if(typeof renderUidGrades==='function') renderUidGrades();
