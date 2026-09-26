@@ -186,8 +186,17 @@
     background-image:url('hero-bg.jpg');
     background-size:cover;background-position:center 30%;background-repeat:no-repeat;
   }
+  /* Richer, less washed-out version of the background photo — the image
+     itself stays exactly as-is (and the parallax JS still controls its
+     position directly), this just sits as a transparent layer on top
+     that boosts color/contrast of whatever is behind it. */
+  #hero::before{
+    content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+    backdrop-filter:saturate(1.35) contrast(1.1) brightness(1.02);
+    -webkit-backdrop-filter:saturate(1.35) contrast(1.1) brightness(1.02);
+  }
   .hero-inner{max-width:880px;position:relative;z-index:3;text-align:center;margin:0 auto;overflow:hidden;
-    background:rgba(255,250,240,0.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    background:rgba(255,250,240,0.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
     border-radius:18px;padding:48px 36px;box-shadow:0 20px 60px rgba(120,80,40,0.18);
   }
   .hero-inner p{margin-left:auto;margin-right:auto;}
@@ -466,7 +475,21 @@
     color:var(--cream);padding:11px 12px;font-family:var(--serif);font-size:0.95rem;border-radius:2px;
   }
   .field input:focus,.field select:focus,.field textarea:focus{outline:1px solid var(--gold);border-color:var(--gold);}
+  .input-btn-row{display:flex;gap:8px;}
+  @media(max-width:480px){
+    .input-btn-row{flex-direction:column;}
+    .input-btn-row button{width:100%;}
+  }
   .otp-boxes{display:flex;gap:10px;margin-bottom:16px;}
+  .pcp-main-tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink);opacity:0.6;padding:8px 4px;font-family:var(--serif-b);font-size:0.92rem;cursor:pointer;margin-right:18px;}
+  .pcp-main-tab.active{opacity:1;color:var(--gold);border-bottom-color:var(--gold);}
+  .pcp-sub-tab{background:rgba(173,124,60,0.12);border:1px solid rgba(173,124,60,0.35);color:var(--ink);padding:6px 14px;font-size:0.82rem;border-radius:20px;cursor:pointer;}
+  .pcp-sub-tab.active{background:var(--gold);color:var(--navy-deep,#FBF3E6);border-color:var(--gold);}
+  .pcp-entry{border:1px solid rgba(173,124,60,0.3);border-radius:10px;padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  .pcp-entry-name{font-size:1rem;color:var(--ink);font-weight:600;}
+  .pcp-entry-meta{font-size:0.8rem;color:var(--gold-soft);}
+  .pcp-entry-date{font-size:0.76rem;color:var(--ink);opacity:0.6;}
+  .pcp-bill-icon{font-size:1.3rem;text-decoration:none;}
   .otp-boxes input{width:44px;height:52px;text-align:center;font-size:1.3rem;}
 
   @media(max-width:420px){
@@ -1390,14 +1413,14 @@
           <div class="field"><label>PIN Code (optional)</label><input type="text" id="cpBankPincode" inputmode="numeric" maxlength="6" placeholder="e.g. 226001"></div>
           <div class="field">
             <label>Email</label>
-            <div style="display:flex;gap:8px;">
+            <div class="input-btn-row">
               <input type="email" id="cpEmail" style="flex:1;">
               <button type="button" class="learn-more" id="cpSendOtpBtn" onclick="cpSendOtp()">Send Code</button>
             </div>
           </div>
           <div class="field" id="cpOtpRow" style="display:none;">
             <label>Enter the 6-digit code sent to your email</label>
-            <div style="display:flex;gap:8px;">
+            <div class="input-btn-row">
               <input type="text" id="cpOtpInput" maxlength="6" inputmode="numeric" style="flex:1;">
               <button type="button" class="learn-more" onclick="cpVerifyOtp()">Verify</button>
             </div>
@@ -1461,6 +1484,7 @@
       </div>
       <div class="reveal" id="gridLiveCheckVastu" style="margin-top:26px;max-width:820px;"></div>
       <div class="grid" id="vastuGridGrid" style="margin-top:30px;"></div>
+      <div class="grid" id="politicalSuccessGridContainer" style="margin-top:20px;"></div>
       <p class="note" id="gridShopNoteVastu" style="margin-top:20px;"></p>
       <p class="note" style="margin-top:8px;" data-i18n>Fees shown are indicative. The final cost may vary according to the details of your case.</p>
       <div class="reveal" id="gridUsageVastu" style="margin-top:36px;max-width:820px;"></div>
@@ -1806,6 +1830,32 @@
 
     <div id="ptab-partner" style="display:none;">
       <h4 style="color:var(--gold);font-family:var(--serif-b);margin:10px 0 10px;font-size:0.95rem;">My Channel Partner ID</h4>
+      <div id="partnerIdBox"></div>
+
+      <div style="display:flex;gap:8px;margin:16px 0 14px;border-bottom:1px solid rgba(173,124,60,0.3);padding-bottom:0;">
+        <button type="button" class="pcp-main-tab active" id="pcpTabAll" onclick="selectPcpMainTab('all')">All</button>
+        <button type="button" class="pcp-main-tab" id="pcpTabOrders" onclick="selectPcpMainTab('orders')">Orders</button>
+        <button type="button" class="pcp-main-tab" id="pcpTabRegs" onclick="selectPcpMainTab('registrations')">Registrations</button>
+      </div>
+
+      <div id="pcpRegFilterBar" style="display:none;margin-bottom:14px;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button type="button" class="pcp-sub-tab active" id="pcpRegAllBtn" onclick="pcpClearRegFilters()">All</button>
+          <div style="position:relative;">
+            <button type="button" class="pcp-sub-tab" onclick="pcpToggleFilterMenu()">Filter <span id="pcpFilterCount" style="display:none;"></span> ▾</button>
+            <div id="pcpFilterMenu" style="display:none;position:absolute;top:110%;left:0;z-index:20;background:var(--navy-deep,#FBF3E6);border:1px solid rgba(173,124,60,0.4);border-radius:8px;padding:14px;min-width:220px;box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+              <p style="font-size:0.72rem;letter-spacing:1px;color:var(--gold-soft);text-transform:uppercase;margin:0 0 6px;">Status</p>
+              <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:4px;"><input type="checkbox" id="pcpFilterPending" onchange="pcpApplyFilters()"> Pending</label>
+              <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:10px;"><input type="checkbox" id="pcpFilterConfirmed" onchange="pcpApplyFilters()"> Confirmed</label>
+              <p style="font-size:0.72rem;letter-spacing:1px;color:var(--gold-soft);text-transform:uppercase;margin:0 0 6px;">Registration Type</p>
+              <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:4px;"><input type="checkbox" id="pcpFilterSelf" onchange="pcpApplyFilters()"> Self-Registered</label>
+              <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:10px;"><input type="checkbox" id="pcpFilterPartner" onchange="pcpApplyFilters()"> Partner Referred</label>
+              <button type="button" class="learn-more" style="width:100%;" onclick="pcpClearRegFilters()">Clear Filters</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="partnerDashboard"></div>
     </div>
 
@@ -2457,11 +2507,15 @@ function loadMyRegistrations(){
 // ID plus every CEI/LPI order that used their referral code. Silently
 // does nothing (tab stays hidden) for the vast majority of customers who
 // aren't partners — this is expected, not an error.
+let myReferralOrders=[]; // cached alongside myReferralLeads, for the Orders/All tabs
+let pcpActiveMainTab='all';
+let pcpStatusFilters=new Set(); // 'pending' | 'confirmed'
+let pcpTypeFilters=new Set(); // 'self' | 'partner'
+
 function loadChannelPartnerStatus(){
   const tabBtn=document.getElementById('partnerTabBtn');
   const referTabBtn=document.getElementById('referLeadTabBtn');
   const becomePartnerLink=document.getElementById('becomePartnerNavLink');
-  const box=document.getElementById('partnerDashboard');
   if(!tabBtn || !currentUserEmail) return;
   fetch(OTP_BACKEND_URL+'/api/channel-partner/dashboard?email='+encodeURIComponent(currentUserEmail))
     .then(r=>r.json())
@@ -2491,51 +2545,165 @@ function loadChannelPartnerStatus(){
         becomePartnerLink.title=T('You\'re already a Channel Partner','आप पहले से ही चैनल पार्टनर हैं');
       }
       myPartnerId=data.partnerId; // used by submitReferredLead() to auto-apply this partner's own code
-      myReferralLeads=data.referralLeads||[]; // cached for the "My Customers" sub-tab
-      if(!box) return;
-      // Every referral shows up here, whatever its state — CEI & LPI
-      // moves to "Confirmed" automatically the moment Razorpay confirms
-      // payment; services stay "Pending" until Shubh's father manually
-      // marks them Confirmed or Not Converted from the admin page.
-      const orders=data.referralOrders||[];
-      const leads=data.referralLeads||[];
-      myReferredCustomersCache=leads.filter(l=>l.referredByPartner);
-      const totalReferrals=orders.length+leads.length;
-      const confirmed=orders.filter(o=>o.status==='paid').length + leads.filter(l=>l.status==='confirmed').length;
-      let html='<div style="border:1px solid rgba(173,124,60,0.4);padding:14px;border-radius:6px;margin-bottom:14px;">'+
-        '<p style="font-size:0.82rem;color:var(--gold-soft);margin:0;">'+T('Your Referral Code','आपका रेफरल कोड')+'</p>'+
-        '<p style="font-size:1.3rem;font-weight:700;color:var(--gold);margin-top:2px;">'+data.partnerId+'</p>'+
-        '<p style="font-size:0.82rem;color:var(--ink);opacity:0.75;margin-top:6px;">'+T('Share this code — for CEI & LPI it applies instantly at checkout; for other services, enter it on the registration form.','यह कोड साझा करें — CEI एवं LPI के लिए यह चेकआउट पर तुरंत लागू होता है; अन्य सेवाओं के लिए इसे पंजीकरण फॉर्म पर दर्ज करें।')+'</p>'+
-        '</div>';
-      const fmtPartnerDate = d => d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
-      if(totalReferrals===0){
-        html+='<p style="font-size:0.88rem;color:var(--ink);opacity:0.75;">'+T('No referrals yet.','अभी तक कोई रेफरल नहीं है।')+'</p>';
-      }else{
-        html+='<p style="font-size:0.85rem;color:var(--gold-soft);margin-bottom:8px;">'+confirmed+' '+T('of','में से')+' '+totalReferrals+' '+T('referrals confirmed','रेफरल कन्फर्म हुए')+'</p>';
-        html+=orders.map(o=>{
-          const statusLabel = o.status==='paid' ? T('Confirmed','कन्फर्म') : T('Pending','लंबित');
-          const statusColor = o.status==='paid' ? '#1E7E34' : 'var(--gold-soft)';
-          const billLink = o.receiptPdfUrl ? ' · <a href="'+OTP_BACKEND_URL+o.receiptPdfUrl+'" target="_blank" style="color:var(--gold);">'+T('View Bill','बिल देखें')+'</a>' : '';
-          return '<div style="border-bottom:1px solid rgba(173,124,60,0.25);padding:8px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
-            '<span style="font-size:0.85rem;color:var(--ink);">'+(o.customerName||'—')+' <span style="opacity:0.65;">('+T('CEI & LPI','CEI एवं LPI')+')</span>'+
-            '<br><span style="font-size:0.74rem;color:var(--ink);opacity:0.6;">'+fmtPartnerDate(o.date)+' · '+o.receiptNumber+billLink+'</span></span>'+
-            '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
-            '</div>';
-        }).join('');
-        html+=leads.map(l=>{
-          const statusLabel = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
-          const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
-          const leadBillLink = (l.status==='confirmed' && l.billPdfUrl) ? ' · <a href="'+OTP_BACKEND_URL+l.billPdfUrl+'" target="_blank" style="color:var(--gold);">'+T('View Bill','बिल देखें')+'</a>' : '';
-          return '<div style="border-bottom:1px solid rgba(173,124,60,0.25);padding:8px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
-            '<span style="font-size:0.85rem;color:var(--ink);">'+(l.customerName||'—')+' <span style="opacity:0.65;">('+l.service+')</span>'+
-            '<br><span style="font-size:0.74rem;color:var(--ink);opacity:0.6;">'+fmtPartnerDate(l.date)+(l.registrationNumber?' · '+l.registrationNumber:'')+leadBillLink+'</span></span>'+
-            '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
-            '</div>';
-        }).join('');
-      }
-      box.innerHTML=html;
+      myReferralOrders=data.referralOrders||[];
+      myReferralLeads=data.referralLeads||[]; // cached for the "My Customers" sub-tab too
+      myReferredCustomersCache=myReferralLeads.filter(l=>l.referredByPartner);
+      renderPcpIdBox(data.partnerId, myReferralOrders, myReferralLeads);
+      renderPcpMainTab();
     })
     .catch(()=>{ tabBtn.style.display='none'; });
+}
+
+const pcpFmtDate = d => d ? new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+
+function renderPcpIdBox(partnerId, orders, leads){
+  const box=document.getElementById('partnerIdBox');
+  if(!box) return;
+  const total=orders.length+leads.length;
+  const confirmed=orders.filter(o=>o.status==='paid').length + leads.filter(l=>l.status==='confirmed').length;
+  const pending=leads.filter(l=>l.status==='pending').length;
+  box.innerHTML='<div style="border:1px solid rgba(173,124,60,0.4);padding:16px 18px;border-radius:8px;">'+
+    '<p style="font-size:0.82rem;color:var(--gold-soft);margin:0;">'+T('Your Referral Code','आपका रेफरल कोड')+'</p>'+
+    '<p style="font-size:1.5rem;font-weight:700;color:var(--gold);margin-top:2px;">'+partnerId+'</p>'+
+    '<p style="font-size:0.82rem;color:var(--ink);opacity:0.75;margin-top:6px;">'+T('Share this code — for CEI & LPI it applies instantly at checkout; for other services, enter it on the registration form.','यह कोड साझा करें — CEI एवं LPI के लिए यह चेकआउट पर तुरंत लागू होता है; अन्य सेवाओं के लिए इसे पंजीकरण फॉर्म पर दर्ज करें।')+'</p>'+
+    '<div style="display:flex;gap:22px;margin-top:14px;flex-wrap:wrap;">'+
+      '<div><span style="font-size:1.2rem;font-weight:700;color:var(--ink);">'+total+'</span><br><span style="font-size:0.74rem;color:var(--gold-soft);">'+T('Total Referrals','कुल रेफरल')+'</span></div>'+
+      '<div><span style="font-size:1.2rem;font-weight:700;color:#1E7E34;">'+confirmed+'</span><br><span style="font-size:0.74rem;color:var(--gold-soft);">'+T('Confirmed','कन्फर्म')+'</span></div>'+
+      '<div><span style="font-size:1.2rem;font-weight:700;color:var(--gold-soft);">'+pending+'</span><br><span style="font-size:0.74rem;color:var(--gold-soft);">'+T('Pending','लंबित')+'</span></div>'+
+    '</div>'+
+  '</div>';
+}
+
+function selectPcpMainTab(tab){
+  pcpActiveMainTab=tab;
+  ['All','Orders','Regs'].forEach(t=>{});
+  document.getElementById('pcpTabAll').classList.toggle('active', tab==='all');
+  document.getElementById('pcpTabOrders').classList.toggle('active', tab==='orders');
+  document.getElementById('pcpTabRegs').classList.toggle('active', tab==='registrations');
+  document.getElementById('pcpRegFilterBar').style.display = (tab==='registrations') ? 'block' : 'none';
+  renderPcpMainTab();
+}
+
+function renderPcpMainTab(){
+  if(pcpActiveMainTab==='all') renderPcpAll();
+  else if(pcpActiveMainTab==='orders') renderPcpOrders();
+  else renderPcpRegistrations();
+}
+
+function pcpEmptyMsg(text){
+  return '<p style="font-size:0.88rem;color:var(--ink);opacity:0.75;">'+text+'</p>';
+}
+
+// "All" — every order and every registration, whatever its state. This
+// preserves the original combined view exactly as it worked before.
+function renderPcpAll(){
+  const box=document.getElementById('partnerDashboard');
+  const orders=myReferralOrders, leads=myReferralLeads;
+  if(orders.length+leads.length===0){ box.innerHTML=pcpEmptyMsg(T('No referrals yet.','अभी तक कोई रेफरल नहीं है।')); return; }
+  let html='';
+  html+=orders.map(o=>{
+    const statusLabel = o.status==='paid' ? T('Confirmed','कन्फर्म') : T('Pending','लंबित');
+    const statusColor = o.status==='paid' ? '#1E7E34' : 'var(--gold-soft)';
+    const billIcon = o.receiptPdfUrl ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+o.receiptPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
+    return '<div class="pcp-entry">'+
+      '<div><span class="pcp-entry-name">'+(o.customerName||'—')+'</span> <span class="pcp-entry-meta">('+T('CEI & LPI','CEI एवं LPI')+')</span><br>'+
+      '<span class="pcp-entry-date">'+pcpFmtDate(o.date)+' · '+o.receiptNumber+'</span></div>'+
+      '<div style="text-align:right;"><span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span><br>'+billIcon+'</div>'+
+      '</div>';
+  }).join('');
+  html+=leads.map(l=>{
+    const statusLabel = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
+    const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
+    const billIcon = (l.status==='confirmed' && l.billPdfUrl) ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+l.billPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
+    return '<div class="pcp-entry">'+
+      '<div><span class="pcp-entry-name">'+(l.customerName||'—')+'</span> <span class="pcp-entry-meta">('+l.service+')</span><br>'+
+      '<span class="pcp-entry-date">'+pcpFmtDate(l.date)+(l.registrationNumber?' · '+l.registrationNumber:'')+'</span></div>'+
+      '<div style="text-align:right;"><span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span><br>'+billIcon+'</div>'+
+      '</div>';
+  }).join('');
+  box.innerHTML=html;
+}
+
+// "Orders" — CEI & LPI only, and only ever confirmed ones (an
+// unconfirmed order isn't a sale yet, so there's nothing to show here
+// for it). No order ID, no amount, no separate status field — every
+// row here is confirmed by definition.
+function renderPcpOrders(){
+  const box=document.getElementById('partnerDashboard');
+  const confirmedOrders=myReferralOrders.filter(o=>o.status==='paid');
+  if(confirmedOrders.length===0){ box.innerHTML=pcpEmptyMsg(T('No confirmed orders yet.','अभी तक कोई कन्फर्म ऑर्डर नहीं है।')); return; }
+  box.innerHTML=confirmedOrders.map(o=>{
+    const billIcon = o.receiptPdfUrl ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+o.receiptPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
+    return '<div class="pcp-entry">'+
+      '<div><span class="pcp-entry-name">'+(o.customerName||'—')+'</span><br>'+
+      '<span class="pcp-entry-meta">'+T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण')+'</span><br>'+
+      '<span class="pcp-entry-date">'+pcpFmtDate(o.date)+'</span></div>'+
+      '<div>'+billIcon+'</div>'+
+      '</div>';
+  }).join('');
+}
+
+function pcpToggleFilterMenu(){
+  const menu=document.getElementById('pcpFilterMenu');
+  menu.style.display = (menu.style.display==='none') ? 'block' : 'none';
+}
+function pcpApplyFilters(){
+  pcpStatusFilters=new Set();
+  if(document.getElementById('pcpFilterPending').checked) pcpStatusFilters.add('pending');
+  if(document.getElementById('pcpFilterConfirmed').checked) pcpStatusFilters.add('confirmed');
+  pcpTypeFilters=new Set();
+  if(document.getElementById('pcpFilterSelf').checked) pcpTypeFilters.add('self');
+  if(document.getElementById('pcpFilterPartner').checked) pcpTypeFilters.add('partner');
+  const anyActive = pcpStatusFilters.size>0 || pcpTypeFilters.size>0;
+  document.getElementById('pcpRegAllBtn').classList.toggle('active', !anyActive);
+  const countEl=document.getElementById('pcpFilterCount');
+  const count=pcpStatusFilters.size+pcpTypeFilters.size;
+  if(count>0){ countEl.textContent='('+count+')'; countEl.style.display='inline'; } else { countEl.style.display='none'; }
+  renderPcpRegistrations();
+}
+function pcpClearRegFilters(){
+  ['pcpFilterPending','pcpFilterConfirmed','pcpFilterSelf','pcpFilterPartner'].forEach(id=>{ document.getElementById(id).checked=false; });
+  pcpStatusFilters=new Set();
+  pcpTypeFilters=new Set();
+  document.getElementById('pcpRegAllBtn').classList.add('active');
+  document.getElementById('pcpFilterCount').style.display='none';
+  document.getElementById('pcpFilterMenu').style.display='none';
+  renderPcpRegistrations();
+}
+
+// "Registrations" — every Lead (service registration), with optional
+// multi-select filters: any combination of Pending/Confirmed status and
+// Self-Registered/Partner-Referred type. Empty filter sets = show all.
+function renderPcpRegistrations(){
+  const box=document.getElementById('partnerDashboard');
+  let leads=myReferralLeads;
+  if(pcpStatusFilters.size>0){
+    leads=leads.filter(l=>{
+      if(pcpStatusFilters.has('pending') && l.status==='pending') return true;
+      if(pcpStatusFilters.has('confirmed') && l.status==='confirmed') return true;
+      return false;
+    });
+  }
+  if(pcpTypeFilters.size>0){
+    leads=leads.filter(l=>{
+      const isPartnerType = !!l.referredByPartner;
+      if(pcpTypeFilters.has('partner') && isPartnerType) return true;
+      if(pcpTypeFilters.has('self') && !isPartnerType) return true;
+      return false;
+    });
+  }
+  if(leads.length===0){ box.innerHTML=pcpEmptyMsg(T('No registrations match this filter.','इस फ़िल्टर से मेल खाता कोई पंजीकरण नहीं है।')); return; }
+  box.innerHTML=leads.map(l=>{
+    const statusLabel = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
+    const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
+    const typeLabel = l.referredByPartner ? T('Partner Referred','पार्टनर द्वारा रेफर') : T('Self-Registered','स्वयं पंजीकृत');
+    const billIcon = (l.status==='confirmed' && l.billPdfUrl) ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+l.billPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
+    return '<div class="pcp-entry">'+
+      '<div><span class="pcp-entry-name">'+(l.customerName||'—')+'</span> <span class="pcp-entry-meta">('+l.service+')</span><br>'+
+      '<span class="pcp-entry-date">'+(l.registrationNumber||'—')+' · '+pcpFmtDate(l.date)+' · '+typeLabel+'</span></div>'+
+      '<div style="text-align:right;"><span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span><br>'+billIcon+'</div>'+
+      '</div>';
+  }).join('');
 }
 
 // A Channel Partner submitting a lead directly on a customer's behalf —
@@ -3125,15 +3293,37 @@ const vastuGridData=[
   {key:'career-growth', en:'Career Growth Vastu Grid', hi:'करियर वृद्धि वास्तु ग्रिड', img:'vg-career-growth'},
   {key:'exam-success', en:'Competitive Exam Success Vastu Grid', hi:'प्रतियोगी परीक्षा सफलता वास्तु ग्रिड', img:'vg-exam-success'},
   {key:'vyapari', en:'Vyapari Vastu Grid', hi:'व्यापारी वास्तु ग्रिड', img:'vg-vyapari'},
-  {key:'negative-energy', en:'Removing Negative Energy Vastu Grid', hi:'नकारात्मक ऊर्जा निवारण वास्तु ग्रिड', img:'vg-negative-energy'},
-  {key:'political-success', en:'Political Success Vastu Grid', hi:'राजनीतिक सफलता वास्तु ग्रिड', img:'vg-political-success'}
+  {key:'negative-energy', en:'Removing Negative Energy Vastu Grid', hi:'नकारात्मक ऊर्जा निवारण वास्तु ग्रिड', img:'vg-negative-energy'}
 ];
+// Political Success is a single, fixed-price product (no Vishisht/
+// Mahasiddhi tier choice like the other grids above) — rendered
+// separately below with its own dedicated card.
+const politicalSuccessGrid={key:'political-success', en:'Political Success Vastu Grid', hi:'राजनीतिक सफलता वास्तु ग्रिड', img:'vg-political-success', price:108000};
 const alignmentGridData=[
   {key:'nav-grah', en:'Nav Grah Alignment Grid', hi:'नवग्रह एलाइनमेंट ग्रिड', img:'ag-nav-grah'},
   {key:'panch-tatva', en:'Panch Tatva Alignment Grid', hi:'पंच तत्व एलाइनमेंट ग्रिड', img:'ag-panch-tatva'},
   {key:'seven-chakras', en:'Seven Chakras Alignment Grid', hi:'सप्त चक्र एलाइनमेंट ग्रिड', img:'ag-seven-chakras'}
 ];
 function fmtRupee(n){ return '₹'+n.toLocaleString('en-IN'); }
+
+// Renders the single, fixed-price Political Success Vastu Grid — no
+// Vishisht/Mahasiddhi tier toggle, just one product at one price.
+function renderPoliticalSuccessGrid(containerId){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  const item=politicalSuccessGrid;
+  el.innerHTML=`
+    <div class="card grid-product-card reveal">
+      <div class="grid-card-img" id="gridimg-${item.key}" data-img="${item.img}"><img src="${item.img}.jpg" alt="${T(item.en,item.hi)}" loading="lazy" decoding="async" width="1200" height="800" onerror="gridImgFallback(this)"></div>
+      <h3 class="graha-name">${T(item.en,item.hi)}</h3>
+      <span class="launching-tag" style="margin-bottom:8px;display:inline-block;">Launching Soon</span>
+      <div class="grid-tier-row">
+        <span class="grid-tier-price" style="font-size:1.1rem;">${fmtRupee(item.price)}</span>
+        <button class="notify-btn" onclick="notifyGridItem('${T(item.en,item.hi).replace(/'/g,"\\'")} — ${fmtRupee(item.price)}')">${T('Notify Me','मुझे सूचित करें')}</button>
+      </div>
+    </div>
+  `;
+}
 function renderGridCategory(containerId, data, catLabel){
   const el=document.getElementById(containerId);
   if(!el) return;
@@ -3470,6 +3660,7 @@ function renderUidGrades(){
 }
 function renderGridShop(){
   renderGridCategory('vastuGridGrid', vastuGridData);
+  renderPoliticalSuccessGrid('politicalSuccessGridContainer');
   renderGridCategory('alignmentGridGrid', alignmentGridData);
   const introV=document.getElementById('gridShopIntroVastu');
   if(introV) introV.textContent=T(
