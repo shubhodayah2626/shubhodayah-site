@@ -2416,9 +2416,7 @@
               <p style="font-size:0.72rem;letter-spacing:1px;color:var(--gold-soft);text-transform:uppercase;margin:0 0 6px;">Status</p>
               <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:4px;"><input type="checkbox" id="pcpFilterPending" onchange="pcpApplyFilters()"> Pending</label>
               <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:10px;"><input type="checkbox" id="pcpFilterConfirmed" onchange="pcpApplyFilters()"> Confirmed</label>
-              <p style="font-size:0.72rem;letter-spacing:1px;color:var(--gold-soft);text-transform:uppercase;margin:0 0 6px;">Registration Type</p>
-              <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:4px;"><input type="checkbox" id="pcpFilterSelf" onchange="pcpApplyFilters()"> <span id="pcpFilterSelfTxt">My own</span></label>
-              <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:10px;"><input type="checkbox" id="pcpFilterPartner" onchange="pcpApplyFilters()"> <span id="pcpFilterPartnerTxt">Referred by me</span></label>
+              <div style="display:none;"><input type="checkbox" id="pcpFilterSelf"><input type="checkbox" id="pcpFilterPartner"></div>
               <button type="button" class="learn-more" style="width:100%;" onclick="pcpClearRegFilters()">Clear Filters</button>
             </div>
           </div>
@@ -3287,9 +3285,9 @@ function renderPcpRegistrations(){
   }
   if(pcpTypeFilters.size>0){
     leads=leads.filter(l=>{
-      const isOwn = !!l.own; // the partner's own registration
-      if(pcpTypeFilters.has('partner') && !isOwn) return true;
-      if(pcpTypeFilters.has('self') && isOwn) return true;
+      const isPartnerType = !!l.referredByPartner;
+      if(pcpTypeFilters.has('partner') && isPartnerType) return true;
+      if(pcpTypeFilters.has('self') && !isPartnerType) return true;
       return false;
     });
   }
@@ -3297,11 +3295,11 @@ function renderPcpRegistrations(){
   box.innerHTML=leads.map(l=>{
     const statusLabel = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
     const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
-    const typeLabel = l.own ? T('My own','मेरा अपना') : T('Referred by me','मेरे द्वारा रेफर');
+    const typeLabel = '';
     const billIcon = (l.status==='confirmed' && l.billPdfUrl) ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+l.billPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(l.customerName||'—')+'</span> <span class="pcp-entry-meta">('+l.service+')</span><br>'+
-      '<span class="pcp-entry-date">'+(l.registrationNumber||'—')+' · '+pcpFmtDate(l.date)+' · '+typeLabel+'</span></div>'+
+      '<span class="pcp-entry-date">'+(l.registrationNumber||'—')+' · '+pcpFmtDate(l.date)+'</span></div>'+
       '<div style="text-align:right;"><span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span><br>'+billIcon+'</div>'+
       '</div>';
   }).join('');
