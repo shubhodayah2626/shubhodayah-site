@@ -2417,7 +2417,10 @@
               <p style="font-size:0.72rem;letter-spacing:1px;color:var(--gold-soft);text-transform:uppercase;margin:0 0 6px;">Status</p>
               <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:4px;"><input type="checkbox" id="pcpFilterPending" onchange="pcpApplyFilters()"> Pending</label>
               <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:10px;"><input type="checkbox" id="pcpFilterConfirmed" onchange="pcpApplyFilters()"> Confirmed</label>
-              <div style="display:none;"><input type="checkbox" id="pcpFilterSelf"><input type="checkbox" id="pcpFilterPartner"></div>
+              <p style="font-size:0.72rem;letter-spacing:1px;color:var(--gold-soft);text-transform:uppercase;margin:0 0 6px;">Registration Type</p>
+              <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:4px;"><input type="checkbox" id="pcpFilterOwn" onchange="pcpApplyFilters()"> My own</label>
+              <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:4px;"><input type="checkbox" id="pcpFilterSelf" onchange="pcpApplyFilters()"> Self-registered</label>
+              <label style="display:block;font-size:0.85rem;color:var(--ink);margin-bottom:10px;"><input type="checkbox" id="pcpFilterPartner" onchange="pcpApplyFilters()"> Partner referred</label>
               <button type="button" class="learn-more" style="width:100%;" onclick="pcpClearRegFilters()">Clear Filters</button>
             </div>
           </div>
@@ -3236,15 +3239,16 @@ function renderPcpOrders(){
   const box=document.getElementById('partnerDashboard');
   const confirmedOrders=myReferralOrders.filter(o=>o.status==='paid');
   if(confirmedOrders.length===0){ box.innerHTML=pcpEmptyMsg(T('No confirmed orders yet.','अभी तक कोई कन्फर्म ऑर्डर नहीं है।')); return; }
-  box.innerHTML=confirmedOrders.map(o=>{
+  const shown=confirmedOrders.filter(o=> pcpOrderType==='all' || (pcpOrderType==='own' ? !!o.own : !o.own));
+  box.innerHTML=pcpOrderChips()+(shown.length===0 ? pcpEmptyMsg(T('No orders match this filter.','इस फ़िल्टर से मेल खाता कोई ऑर्डर नहीं है।')) : shown.map(o=>{
     const billIcon = o.receiptPdfUrl ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+o.receiptPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(o.customerName||'—')+'</span><br>'+
       '<span class="pcp-entry-meta">'+T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण')+'</span><br>'+
-      '<span class="pcp-entry-date">'+pcpFmtDate(o.date)+(o.own?' · '+T('My own','मेरा अपना'):'')+'</span></div>'+
+      '<span class="pcp-entry-date">'+pcpFmtDate(o.date)+' · '+(o.own?T('My own','मेरा अपना'):T('Customer order','ग्राहक ऑर्डर'))+'</span></div>'+
       '<div>'+billIcon+'</div>'+
       '</div>';
-  }).join('');
+  }).join(''));
 }
 
 function pcpToggleFilterMenu(){
@@ -3256,6 +3260,7 @@ function pcpApplyFilters(){
   if(document.getElementById('pcpFilterPending').checked) pcpStatusFilters.add('pending');
   if(document.getElementById('pcpFilterConfirmed').checked) pcpStatusFilters.add('confirmed');
   pcpTypeFilters=new Set();
+  if(document.getElementById('pcpFilterOwn').checked) pcpTypeFilters.add('own');
   if(document.getElementById('pcpFilterSelf').checked) pcpTypeFilters.add('self');
   if(document.getElementById('pcpFilterPartner').checked) pcpTypeFilters.add('partner');
   const anyActive = pcpStatusFilters.size>0 || pcpTypeFilters.size>0;
@@ -3266,7 +3271,7 @@ function pcpApplyFilters(){
   renderPcpRegistrations();
 }
 function pcpClearRegFilters(){
-  ['pcpFilterPending','pcpFilterConfirmed','pcpFilterSelf','pcpFilterPartner'].forEach(id=>{ document.getElementById(id).checked=false; });
+  ['pcpFilterPending','pcpFilterConfirmed','pcpFilterOwn','pcpFilterSelf','pcpFilterPartner'].forEach(id=>{ document.getElementById(id).checked=false; });
   pcpStatusFilters=new Set();
   pcpTypeFilters=new Set();
   document.getElementById('pcpRegAllBtn').classList.add('active');
@@ -3290,9 +3295,7 @@ function renderPcpRegistrations(){
   }
   if(pcpTypeFilters.size>0){
     leads=leads.filter(l=>{
-      const isPartnerType = !!l.referredByPartner;
-      if(pcpTypeFilters.has('partner') && isPartnerType) return true;
-      if(pcpTypeFilters.has('self') && !isPartnerType) return true;
+      return pcpTypeFilters.has(pcpLeadType(l));
       return false;
     });
   }
@@ -3300,11 +3303,11 @@ function renderPcpRegistrations(){
   box.innerHTML=leads.map(l=>{
     const statusLabel = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
     const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
-    const typeLabel = '';
+    const typeLabel = pcpLeadTypeLabel(l);
     const billIcon = (l.status==='confirmed' && l.billPdfUrl) ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+l.billPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(l.customerName||'—')+'</span> <span class="pcp-entry-meta">('+l.service+')</span><br>'+
-      '<span class="pcp-entry-date">'+(l.registrationNumber||'—')+' · '+pcpFmtDate(l.date)+(l.own?' · '+T('My own','मेरा अपना'):'')+'</span></div>'+
+      '<span class="pcp-entry-date">'+(l.registrationNumber||'—')+' · '+pcpFmtDate(l.date)+' · '+typeLabel+'</span></div>'+
       '<div style="text-align:right;"><span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span><br>'+billIcon+'</div>'+
       '</div>';
   }).join('');
@@ -6085,6 +6088,15 @@ function openMyQueries(){
 
 
 var myReferralQueries=[];
+var pcpOrderType='all'; // 'all' | 'own' | 'customer'
+function pcpLeadType(l){ return l.own ? 'own' : (l.referredByPartner ? 'partner' : 'self'); }
+function pcpLeadTypeLabel(l){ var t=pcpLeadType(l); return t==='own' ? T('My own','मेरा अपना') : (t==='partner' ? T('Partner referred','पार्टनर द्वारा रेफर') : T('Self-registered','स्वयं पंजीकृत')); }
+function pcpOrderChips(){
+  var opts=[['all',T('All','सभी')],['own',T('My own','मेरा अपना')],['customer',T('Customer orders','ग्राहक ऑर्डर')]];
+  return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;">'+opts.map(function(o){
+    return '<button type="button" class="pcp-sub-tab'+(pcpOrderType===o[0]?' active':'')+'" onclick="pcpOrderType=\''+o[0]+'\';renderPcpOrders();">'+o[1]+'</button>';
+  }).join('')+'</div>';
+}
 function pcpQueriesHTML(list){
   return list.map(function(q){
     var st = q.status==='converted' ? [T('Converted','परिवर्तित'),'#1E7E34'] : (q.status==='cancelled' ? [T('Cancelled','रद्द'),'#B03A2E'] : [T('Waiting','प्रतीक्षा में'),'var(--gold-soft)']);
