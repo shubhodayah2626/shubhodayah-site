@@ -3039,7 +3039,8 @@ function openProfile(){
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer;" onclick="toggleOrderDetail(${i})">
           <div>
             <span style="font-size:1rem;color:var(--ink);font-weight:600;">${o.label}</span><br>
-            <span style="font-size:0.82rem;color:var(--gold-soft);">${T('Order Number','ऑर्डर नंबर')}: ${o.orderNumber||o.receiptNumber||'—'}</span><br>
+            <span style="font-size:0.82rem;color:var(--gold-soft);">${T('Order Number','ऑर्डर नंबर')}: ${o.orderNumber||'—'}</span><br>
+            ${o.receiptNumber?`<span style="font-size:0.78rem;color:var(--gold-soft);">${T('Bill Number','बिल नंबर')}: ${o.receiptNumber}</span><br>`:''}
             <span style="font-size:0.78rem;color:var(--ink);opacity:0.65;">${o.when}</span>
           </div>
           <span class="order-status" style="font-size:0.78rem;color:var(--gold-soft);text-align:right;max-width:130px;flex-shrink:0;">${o.status}</span>
@@ -3213,7 +3214,7 @@ function renderPcpAll(){
     const billIcon = o.receiptPdfUrl ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+o.receiptPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(o.customerName||'—')+'</span> <span class="pcp-entry-meta">('+T('CEI & LPI','CEI एवं LPI')+')</span><br>'+
-      '<span class="pcp-entry-date">'+pcpFmtDate(o.date)+' · '+o.receiptNumber+(o.own?' · '+T('My own','मेरा अपना'):'')+'</span></div>'+
+      '<span class="pcp-entry-date">'+pcpFmtDate(o.date)+' · '+(o.orderNumber||o.receiptNumber)+(o.own?' · '+T('My own','मेरा अपना'):'')+'</span></div>'+
       '<div style="text-align:right;"><span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span><br>'+billIcon+'</div>'+
       '</div>';
   }).join('');
@@ -3245,7 +3246,7 @@ function renderPcpOrders(){
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(o.customerName||'—')+'</span><br>'+
       '<span class="pcp-entry-meta">'+T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण')+'</span><br>'+
-      '<span class="pcp-entry-date">'+pcpFmtDate(o.date)+' · '+(o.own?T('My own','मेरा अपना'):T('Customer order','ग्राहक ऑर्डर'))+'</span></div>'+
+      '<span class="pcp-entry-date">'+(o.orderNumber?o.orderNumber+' · ':'')+pcpFmtDate(o.date)+' · '+(o.own?T('My own','मेरा अपना'):T('Customer order','ग्राहक ऑर्डर'))+'</span></div>'+
       '<div>'+billIcon+'</div>'+
       '</div>';
   }).join(''));
@@ -3590,7 +3591,7 @@ function syncOrdersFromServer(email){
         }
         userOrders.push({
           receiptNumber:o.receiptNumber,
-          orderNumber:o.receiptNumber,
+          orderNumber:o.orderNumber||'',
           label:T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण'),
           when:o.paidAt?new Date(o.paidAt).toLocaleDateString():'',
           status:o.reportPdfUrl?T('Report Ready','रिपोर्ट तैयार है'):(o.reportOtpUsed?T('Unlocked — Generating Report','अनलॉक किया गया — रिपोर्ट तैयार हो रही है'):T('Paid — Awaiting Portal Unlock','भुगतान हो गया — पोर्टल अनलॉक लंबित')),
@@ -5865,6 +5866,15 @@ var SPanchang = (function(){
   if(typeof currentLang!=='undefined' && currentLang==='hi') translatePass(document);
 })();
 
+/* Phones: home page order = top section → "Have a Question?" → Panchang */
+(function(){
+  try{
+    if(document.documentElement.getAttribute('data-device')!=='phone') return;
+    var q=document.getElementById('querySection'), p=document.getElementById('panchang');
+    if(q && p && p.parentNode===q.parentNode) p.parentNode.insertBefore(q, p);
+  }catch(e){}
+})();
+
 /* ---------- Referral code field (registrations + queries) ---------- */
 var refState={}; // inputId -> true (valid) | false (invalid) | null (blank/checking)
 var refTimers={};
@@ -5902,6 +5912,8 @@ function refPrefill(id){
 function qEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function qSession(){ try{ return JSON.parse(localStorage.getItem('shubhodayah_session')||'null'); }catch(e){ return null; } }
 function qToken(){ var s=qSession(); return (isSignedIn && s && s.token && s.email===currentUserEmail) ? s.token : ''; }
+// Signed in (any sign-in, old or new) = no code needed. The email code is only for people who aren't signed in.
+function qReady(){ return !!qToken() || !!(isSignedIn && currentUserEmail); }
 function qClearToken(){ var s=qSession(); if(s){ delete s.token; try{ localStorage.setItem('shubhodayah_session', JSON.stringify(s)); }catch(e){} } }
 function qSignIn(name, email, token){
   isSignedIn=true;
@@ -5930,7 +5942,7 @@ function qVerifyHTML(intro){
     '<p class="form-msg" id="qVerifyMsg"></p></div>';
 }
 function qVerifiedHTML(){
-  return '<div id="qVerifyBox"><p class="q-verified">✓ '+T('Verified email: ','सत्यापित ईमेल: ')+qEsc(currentUserEmail)+'</p></div>';
+  return '<div id="qVerifyBox"><p class="q-verified">✓ '+T('Signed in as ','साइन इन: ')+qEsc(currentUserEmail)+'</p></div>';
 }
 function qSendCode(){
   var email=document.getElementById('qEmail').value.trim(), msg=document.getElementById('qVerifyMsg'), btn=document.getElementById('qSendBtn');
@@ -5969,7 +5981,7 @@ function qVerifyCode(){
 
 function openQueryForm(){
   qAfterVerify=null;
-  var verified=!!qToken();
+  var verified=qReady();
   var intro=isSignedIn ? T('For your privacy, please confirm your email once with a code.','आपकी गोपनीयता के लिए, कृपया एक बार कोड से अपना ईमेल पुष्टि करें।') : T('We will send a code to your email to confirm it is yours.','आपका ईमेल पुष्टि करने के लिए हम उस पर एक कोड भेजेंगे।');
   document.getElementById('queryModalBody').innerHTML=
     '<h2>'+T('Submit a Query','प्रश्न भेजें')+'</h2>'+
@@ -5994,14 +6006,14 @@ function submitQuery(){
   var msg=document.getElementById('qMsg'); msg.style.color='';
   var v=function(id){ return document.getElementById(id).value.trim(); };
   var p={name:v('qName'), mobile:v('qMobile'), pob:v('qPob'), tob:v('qTob'), dob:v('qDob'), concern:v('qConcern')};
-  if(!qToken()){ msg.textContent=T('Please verify your email first — tap "Send Code" above.','कृपया पहले अपना ईमेल सत्यापित करें — ऊपर "कोड भेजें" दबाएं।'); var e=document.getElementById('qEmail'); if(e) e.focus(); return; }
+  if(!qReady()){ msg.textContent=T('Please verify your email first — tap "Send Code" above.','कृपया पहले अपना ईमेल सत्यापित करें — ऊपर "कोड भेजें" दबाएं।'); var e=document.getElementById('qEmail'); if(e) e.focus(); return; }
   if(!p.name){ msg.textContent=T('Please enter your name.','कृपया अपना नाम दर्ज करें।'); return; }
   if(p.mobile.replace(/\D/g,'').length<10){ msg.textContent=T('Please enter a valid mobile number.','कृपया सही मोबाइल नंबर दर्ज करें।'); return; }
   if(p.concern.length<5){ msg.textContent=T('Please describe your concern.','कृपया अपनी समस्या बताएं।'); return; }
   if(refInvalid('qRefCode')){ msg.textContent=T('That referral code is not valid — fix it or leave it blank.','रेफरल कोड सही नहीं है — इसे ठीक करें या खाली छोड़ दें।'); return; }
   if(!document.getElementById('qDeclare').checked){ msg.textContent=T('Please tick the declaration.','कृपया घोषणा पर टिक करें।'); return; }
   p.referralCode=document.getElementById('qRefCode').value.trim();
-  p.token=qToken();
+  p.token=qToken(); p.email=currentUserEmail;
   var btn=document.getElementById('qSubmitBtn'); btn.disabled=true;
   msg.textContent=T('Submitting… (can take up to a minute)','भेजा जा रहा है… (एक मिनट तक लग सकता है)');
   fetch(OTP_BACKEND_URL+'/api/queries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)})
@@ -6061,7 +6073,7 @@ function openMyQueries(){
   closeModal('queryModal');
   var body=document.getElementById('myQueriesBody');
   var head='<h2>'+T('My Queries','मेरे प्रश्न')+'</h2>';
-  if(!qToken()){
+  if(!qReady()){
     qAfterVerify=openMyQueries;
     body.innerHTML=head+'<p class="sub">'+T('Your queries and their acknowledgement numbers','आपके प्रश्न और उनकी पावती संख्या')+'</p>'+
       qVerifyHTML(T('To keep your queries private, please confirm your email with a code.','आपके प्रश्न निजी रखने के लिए, कृपया कोड से अपना ईमेल पुष्टि करें।'));
@@ -6070,7 +6082,7 @@ function openMyQueries(){
   }
   body.innerHTML=head+'<p class="sub">'+qEsc(currentUserEmail)+'</p><p class="form-msg">'+T('Loading…','लोड हो रहा है…')+'</p>';
   openModal('myQueriesModal');
-  fetch(OTP_BACKEND_URL+'/api/queries/mine',{headers:{'x-session':qToken()}})
+  fetch(OTP_BACKEND_URL+'/api/queries/mine',{headers:{'x-session':qToken(),'x-email':currentUserEmail||''}})
     .then(function(r){ return r.json().then(function(d){ return {status:r.status,data:d}; }); })
     .then(function(x){
       if(x.status===401){ qClearToken(); openMyQueries(); return; }
