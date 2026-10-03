@@ -3224,7 +3224,7 @@ function renderPcpAll(){
     const billIcon = (l.status==='confirmed' && l.billPdfUrl) ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+l.billPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(l.customerName||'—')+'</span> <span class="pcp-entry-meta">('+l.service+')</span><br>'+
-      '<span class="pcp-entry-date">'+pcpFmtDate(l.date)+(l.registrationNumber?' · '+l.registrationNumber:'')+(l.own?' · '+T('My own','मेरा अपना'):'')+'</span></div>'+
+      '<span class="pcp-entry-date">'+pcpFmtDate(l.date)+(l.registrationNumber?' · '+l.registrationNumber:'')+(l.own?' · '+T('My own','मेरा अपना'):'')+'</span>'+(l.fromQuery?'<br><span class="pcp-entry-date" style="color:var(--gold-soft);">'+T('Moved from query ','प्रश्न से स्थानांतरित: ')+l.fromQuery+'</span>':'')+'</div>'+
       '<div style="text-align:right;"><span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span><br>'+billIcon+'</div>'+
       '</div>';
   }).join('');
@@ -3308,7 +3308,7 @@ function renderPcpRegistrations(){
     const billIcon = (l.status==='confirmed' && l.billPdfUrl) ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+l.billPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(l.customerName||'—')+'</span> <span class="pcp-entry-meta">('+l.service+')</span><br>'+
-      '<span class="pcp-entry-date">'+(l.registrationNumber||'—')+' · '+pcpFmtDate(l.date)+' · '+typeLabel+'</span></div>'+
+      '<span class="pcp-entry-date">'+(l.registrationNumber||'—')+' · '+pcpFmtDate(l.date)+' · '+typeLabel+'</span>'+(l.fromQuery?'<br><span class="pcp-entry-date" style="color:var(--gold-soft);">'+T('Moved from query ','प्रश्न से स्थानांतरित: ')+l.fromQuery+'</span>':'')+'</div>'+
       '<div style="text-align:right;"><span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span><br>'+billIcon+'</div>'+
       '</div>';
   }).join('');
