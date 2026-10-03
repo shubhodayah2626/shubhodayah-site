@@ -2289,7 +2289,7 @@
       <div class="field" id="regPincodeField" style="display:none;"><label>PIN Code</label><input type="text" id="regPincode" inputmode="numeric" maxlength="6" placeholder="e.g. 226010"></div>
       <div class="field"><label id="regPurposeLabel">Describe Your Concern</label><textarea rows="3" id="regPurpose" placeholder="Please describe what you'd like help with..."></textarea></div>
 
-      <div class="field" id="regRefCodeField"><label>Referral Code (optional)</label><input type="text" id="regRefCode" placeholder="e.g. ST-51" autocomplete="off" autocapitalize="characters" oninput="refCheck('regRefCode')"><p class="form-msg" id="regRefCodeMsg" style="margin-top:4px;"></p></div>
+      <div class="field" id="regRefCodeField"><label>Referral Code (optional)</label><input type="text" id="regRefCode" placeholder="आप इस कॉलम को छोड़ सकते हैं" autocomplete="off" autocapitalize="characters" oninput="refCheck('regRefCode')"><p class="form-msg" id="regRefCodeMsg" style="margin-top:4px;"></p></div>
       <label style="font-size:0.85rem;color:#4A3626;display:flex;gap:8px;margin:16px 0;">
         <input type="checkbox" id="regDeclare" required> I declare that the above information is true and correct to the best of my knowledge.
       </label>
@@ -3028,7 +3028,7 @@ function openProfile(){
   if(userOrders.length===0){
     box.innerHTML='<p style="font-size:0.88rem;color:var(--ink);opacity:0.75;">'+T('No orders yet.','अभी तक कोई ऑर्डर नहीं है।')+'</p>';
   }else{
-    const total=userOrders.reduce((s,o)=>s+(o.amount||0),0);
+    const total=userOrders.reduce((s,o)=>s+(o.unpaid?0:(o.amount||0)),0);
     box.innerHTML=`
       <div style="display:flex;justify-content:space-between;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid rgba(173,124,60,0.35);">
         <span style="font-size:0.85rem;color:var(--gold-soft);">${T('Total across all orders','सभी ऑर्डर का कुल योग')}</span>
@@ -3245,7 +3245,7 @@ function renderPcpOrders(){
     const billIcon = o.receiptPdfUrl ? '<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+o.receiptPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>' : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(o.customerName||'—')+'</span><br>'+
-      '<span class="pcp-entry-meta">'+T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण')+'</span><br>'+
+      '<span class="pcp-entry-meta">'+(o.productName?o.productName:T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण'))+(o.fromQuery?' · '+T('from query ','प्रश्न से ')+o.fromQuery:'')+'</span><br>'+
       '<span class="pcp-entry-date">'+(o.orderNumber?o.orderNumber+' · ':'')+pcpFmtDate(o.date)+' · '+(o.own?T('My own','मेरा अपना'):T('Customer order','ग्राहक ऑर्डर'))+'</span></div>'+
       '<div>'+billIcon+'</div>'+
       '</div>';
@@ -3588,6 +3588,22 @@ function syncOrdersFromServer(email){
         }
         if(o.reportPdfUrl){
           detailLinks[T('CEI & LPI Report','CEI एवं LPI रिपोर्ट')]='<a href="'+o.reportPdfUrl+'" target="_blank" style="color:var(--gold);">'+T('View','देखें')+'</a> &nbsp;|&nbsp; <a href="'+o.reportPdfUrl+'" download style="color:var(--gold);">'+T('Download','डाउनलोड करें')+'</a>';
+        }
+        if(o.kind==='product'){
+          const pd={};
+          pd[T('Bill Number','बिल नंबर')]=o.receiptNumber;
+          if(o.fromQuery) pd[T('From your query','आपके प्रश्न से')]=o.fromQuery;
+          if(o.receiptPdfUrl){ const u=OTP_BACKEND_URL+o.receiptPdfUrl; pd[T('Bill','बिल')]='<a href="'+u+'" target="_blank" style="color:var(--gold);">'+T('View','देखें')+'</a> &nbsp;|&nbsp; <a href="'+u+'" download style="color:var(--gold);">'+T('Download','डाउनलोड करें')+'</a>'; }
+          userOrders.push({
+            receiptNumber:o.receiptNumber, orderNumber:o.orderNumber||'',
+            label:o.productName||T('Product','उत्पाद'),
+            when:new Date(o.paidAt||o.createdAt).toLocaleDateString(),
+            status:o.status==='paid' ? T('Paid','भुगतान हो गया') : T('Awaiting payment','भुगतान लंबित'),
+            amount:o.amount?Math.round(o.amount/100):null,
+            unpaid:o.status!=='paid',
+            details:pd
+          });
+          return;
         }
         userOrders.push({
           receiptNumber:o.receiptNumber,
@@ -5879,7 +5895,7 @@ var refState={}; // inputId -> true (valid) | false (invalid) | null (blank/chec
 var refTimers={};
 function refFieldHTML(id){
   return '<div class="field" id="'+id+'Field"><label>'+T('Referral Code (optional)','रेफरल कोड (वैकल्पिक)')+'</label>'+
-    '<input type="text" id="'+id+'" placeholder="e.g. ST-51" autocomplete="off" autocapitalize="characters" oninput="refCheck(\''+id+'\')">'+
+    '<input type="text" id="'+id+'" placeholder="आप इस कॉलम को छोड़ सकते हैं" autocomplete="off" autocapitalize="characters" oninput="refCheck(\''+id+'\')">'+
     '<p class="form-msg" id="'+id+'Msg" style="margin-top:4px;"></p></div>';
 }
 function refCheck(id){
@@ -6042,7 +6058,7 @@ function submitQuery(){
 }
 
 function qStatusHTML(q){
-  if(q.status==='converted') return '<span class="q-status converted">'+T('Registered','पंजीकृत')+'</span>';
+  if(q.status==='converted') return '<span class="q-status converted">'+(q.convertedOrderNumber?T('Ordered','ऑर्डर बना'):T('Registered','पंजीकृत'))+'</span>';
   if(q.status==='cancelled') return '<span class="q-status cancelled">'+T('Closed','बंद')+'</span>';
   return '<span class="q-status waiting">'+T('Waiting','प्रतीक्षा में')+'</span>';
 }
@@ -6055,13 +6071,23 @@ function qCardHTML(q){
     '<div class="q-when">'+when+'</div>'+
     '<p class="q-concern">'+qEsc(q.concern)+'</p>'+
     '<div class="q-meta">'+qEsc(q.name)+(q.mobile?' · '+qEsc(q.mobile):'')+(birth?'<br>'+T('Birth: ','जन्म: ')+qEsc(birth):'')+(q.referralCode?'<br>'+T('Referral code: ','रेफरल कोड: ')+qEsc(q.referralCode):'')+'</div>'+
-    (q.status==='converted'?
+    (q.status==='converted' && q.convertedOrderNumber?
+      '<div class="q-note ok"><b>✓ '+T('This query has been converted into an order.','यह प्रश्न ऑर्डर में बदल दिया गया है।')+'</b><br>'+
+        T('Product: ','उत्पाद: ')+qEsc(q.convertedService||'')+'<br>'+
+        T('Order Number: ','ऑर्डर नंबर: ')+'<b>'+qEsc(q.convertedOrderNumber)+'</b>'+
+        '<button class="btn btn-outline q-view-reg" onclick="qViewOrders()">'+T('View in My Orders','मेरे ऑर्डर में देखें')+'</button></div>':'')+
+    (q.status==='converted' && !q.convertedOrderNumber?
       '<div class="q-note ok"><b>✓ '+T('This query has been converted into a registration.','यह प्रश्न पंजीकरण में बदल दिया गया है।')+'</b><br>'+
         T('Service: ','सेवा: ')+qEsc(q.convertedService||'')+'<br>'+
         T('Registration Number: ','पंजीकरण नंबर: ')+'<b>'+qEsc(q.convertedRegistrationNumber||'')+'</b>'+
         '<button class="btn btn-outline q-view-reg" onclick="qViewRegistrations()">'+T('View in My Registrations','मेरे पंजीकरण में देखें')+'</button></div>':'')+
     (q.status==='cancelled'?'<div class="q-note no"><b>✕ '+T('This query has been cancelled.','यह प्रश्न रद्द कर दिया गया है।')+'</b></div>':'')+
   '</div>';
+}
+function qViewOrders(){
+  closeModal('myQueriesModal');
+  openProfile();
+  selectProfileTab('orders');
 }
 function qViewRegistrations(){
   closeModal('myQueriesModal');
@@ -6111,7 +6137,7 @@ function pcpOrderChips(){
 function pcpQueriesHTML(list){
   return list.map(function(q){
     var st = q.status==='converted' ? [T('Converted','परिवर्तित'),'#1E7E34'] : (q.status==='cancelled' ? [T('Cancelled','रद्द'),'#B03A2E'] : [T('Waiting','प्रतीक्षा में'),'var(--gold-soft)']);
-    var sub = q.status==='converted' ? ('<br><span class="pcp-entry-date" style="color:#1E7E34;">'+T('Moved to registration ','पंजीकरण में परिवर्तित: ')+(q.convertedRegistrationNumber||'')+(q.convertedService?' ('+q.convertedService+')':'')+'</span>') : '';
+    var sub = q.status==='converted' ? ('<br><span class="pcp-entry-date" style="color:#1E7E34;">'+(q.convertedOrderNumber ? T('Moved to order ','ऑर्डर में परिवर्तित: ')+q.convertedOrderNumber : T('Moved to registration ','पंजीकरण में परिवर्तित: ')+(q.convertedRegistrationNumber||''))+(q.convertedService?' ('+q.convertedService+')':'')+'</span>') : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(q.customerName||'—')+'</span> <span class="pcp-entry-meta">('+T('Query','प्रश्न')+')</span><br>'+
       '<span class="pcp-entry-date">'+(q.ackNumber||'—')+' · '+pcpFmtDate(q.date)+(q.own?' · '+T('My own','मेरा अपना'):'')+'</span>'+sub+'</div>'+
