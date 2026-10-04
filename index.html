@@ -2127,7 +2127,7 @@
           <tr><td>Pitru Dosh Nivaran Yantra</td><td>₹13,200</td><td><button class="btn-buy-hidden" style="display:none;background:none;border:1px solid var(--gold);color:var(--gold-soft);padding:5px 10px;font-size:0.68rem;letter-spacing:0.5px;border-radius:2px;font-family:var(--serif);cursor:pointer;" onclick="shopBuy('siddha:pitru-dosh')">Buy</button></td></tr>
           <tr><td>Ashta Siddhi Yantra</td><td>₹61,200</td><td><button class="btn-buy-hidden" style="display:none;background:none;border:1px solid var(--gold);color:var(--gold-soft);padding:5px 10px;font-size:0.68rem;letter-spacing:0.5px;border-radius:2px;font-family:var(--serif);cursor:pointer;" onclick="shopBuy('siddha:ashta-siddhi-deluxe')">Buy</button></td></tr>
         </table>
-        <p class="note">These yantras are launching soon. Registrations open shortly — check back, or use the survey above to see which one matches you.</p>
+        <p class="note">Tap Buy to order any yantra. Pay securely online — delivery is coordinated with you via email. Not sure which one fits you? Use the survey above.</p>
       </div>
     </div>
 
@@ -2417,7 +2417,7 @@
         <button type="button" class="pcp-main-tab" id="pcpTabQueries" onclick="selectPcpMainTab('queries')">Queries</button>
       </div>
 
-      <div id="pcpRegFilterBar" style="display:none;margin-bottom:14px;">
+      <div id="pcpRegFilterBar" style="display:none !important;margin-bottom:14px;">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button type="button" class="pcp-sub-tab active" id="pcpRegAllBtn" onclick="pcpClearRegFilters()">All</button>
           <div style="position:relative;">
@@ -2446,29 +2446,17 @@
         <button type="button" id="rlSubTabCustomers" class="learn-more" onclick="selectReferLeadSubTab('customers')">My Customers</button>
       </div>
       <div id="rlSubmitPane">
-      <p class="note" style="margin-top:0;">If someone you know would rather not fill in their own details, submit it here on their behalf — your referral code is applied automatically.</p>
-      <div class="field"><label>Customer's Full Name</label><input type="text" id="rlName"></div>
-      <div class="field"><label>Customer's Mobile Number</label><input type="tel" id="rlMobile"></div>
-      <div class="field"><label>Customer's Email (optional)</label><input type="email" id="rlEmail"></div>
-      <div class="field"><label>Customer's Address</label><input type="text" id="rlAddress"></div>
-      <div class="field"><label>Service</label>
-        <select id="rlService">
-          <option value="Consultation Structure">Consultation Structure</option>
-          <option value="Rudra Dowsing & Vastu Appointment">Rudra Dowsing & Vastu Appointment</option>
-          <option value="Dosh Nivaran">Dosh Nivaran</option>
-          <option value="Shubhodayah Unique ID">Shubhodayah Unique ID</option>
-          <option value="Sutra Service — Personalized/General">Sutra Service</option>
-          <option value="कुंडली परामर्श">Kundali Consultation (कुंडली परामर्श)</option>
-          <option value="कुंडली प्रशिक्षण">Kundali Training (कुंडली प्रशिक्षण)</option>
-          <option value="ग्रह शांति हेतु सिद्ध यंत्र">Siddha Yantra for Graha Shanti (ग्रह शांति हेतु सिद्ध यंत्र)</option>
-          <option value="चक्र हीलिंग">Chakra Healing (चक्र हीलिंग)</option>
-          <option value="नाड़ी हीलिंग">Nadi Healing (नाड़ी हीलिंग)</option>
-          <option value="माइंड हीलिंग">Mind Healing (माइंड हीलिंग)</option>
-          <option value="Other">Other</option>
-        </select>
+      <p class="note" style="margin-top:0;">Submit a query on behalf of someone you know. It becomes a normal query (SHUAK number) with your referral code — our team reviews it and turns it into a registration or an order. You can follow it under My Channel Partner ID → Queries.</p>
+      <div class="field"><label>Customer's Full Name</label><input type="text" id="rlName" autocomplete="off"></div>
+      <div class="field"><label>Customer's Mobile Number</label><input type="tel" id="rlMobile" inputmode="tel" maxlength="14"></div>
+      <div class="field"><label>Customer's Email (optional)</label><input type="email" id="rlEmail" placeholder="आप इस कॉलम को छोड़ सकते हैं"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:130px;"><label>Date of Birth (optional)</label><input type="date" id="rlDob"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label>Time of Birth (optional)</label><input type="time" id="rlTob"></div>
       </div>
-      <div class="field"><label>Notes / Concern (optional)</label><textarea rows="3" id="rlPurpose"></textarea></div>
-      <button type="button" class="btn" style="margin-top:10px;" onclick="submitReferredLead()">Submit</button>
+      <div class="field"><label>Place of Birth (optional)</label><input type="text" id="rlPob"></div>
+      <div class="field"><label>Customer's Concern / Problem</label><textarea rows="4" id="rlConcern" placeholder="Describe the customer's problem in their words…"></textarea></div>
+      <button type="button" class="btn" style="margin-top:10px;" onclick="submitReferredLead()">Submit Query</button>
       <p class="form-msg" id="rlMsg"></p>
       </div>
       <div id="rlCustomersPane" style="display:none;">
@@ -3208,7 +3196,7 @@ function selectPcpMainTab(tab){
   document.getElementById('pcpTabOrders').classList.toggle('active', tab==='orders');
   document.getElementById('pcpTabRegs').classList.toggle('active', tab==='registrations');
   document.getElementById('pcpTabQueries').classList.toggle('active', tab==='queries');
-  document.getElementById('pcpRegFilterBar').style.display = (tab==='registrations') ? 'block' : 'none';
+  /* old registration filter menu retired — chips are drawn inside each tab */
   renderPcpMainTab();
 }
 
@@ -3342,50 +3330,30 @@ function renderPcpRegistrations(){
 // own code applied automatically (never typed, never guessed).
 function submitReferredLead(){
   const msg=document.getElementById('rlMsg');
-  msg.className='form-msg'; msg.textContent='';
-  const name=document.getElementById('rlName').value.trim();
-  const email=document.getElementById('rlEmail').value.trim();
+  msg.className='form-msg'; msg.style.color=''; msg.textContent='';
+  const v=id=>{const e=document.getElementById(id); return e?e.value.trim():'';};
+  const name=v('rlName'), mobile=v('rlMobile'), email=v('rlEmail'), concern=v('rlConcern');
   if(!myPartnerId){ msg.textContent=T('Could not confirm your partner status — please reopen your profile and try again.','आपकी पार्टनर स्थिति की पुष्टि नहीं हो सकी — कृपया अपनी प्रोफ़ाइल फिर से खोलें और पुनः प्रयास करें।'); return; }
-  const rlMob=document.getElementById('rlMobile').value.trim();
-  if(!name || rlMob.replace(/\D/g,'').length<10){ msg.textContent=T('Please enter the customer\'s name and a valid mobile number.','कृपया ग्राहक का नाम एवं सही मोबाइल नंबर दर्ज करें।'); return; }
+  if(!name || mobile.replace(/\D/g,'').length<10){ msg.textContent=T('Please enter the customer\'s name and a valid mobile number.','कृपया ग्राहक का नाम एवं सही मोबाइल नंबर दर्ज करें।'); return; }
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ msg.textContent=T('That email doesn\'t look right — fix it or leave it blank.','ईमेल सही नहीं लग रहा — इसे ठीक करें या खाली छोड़ दें।'); return; }
-  const btn=document.querySelector('#ptab-referlead .btn');
-  const originalText=btn.textContent;
+  if(concern.length<5){ msg.textContent=T('Please describe the customer\'s concern.','कृपया ग्राहक की समस्या लिखें।'); return; }
+  const btn=document.querySelector('#rlSubmitPane .btn'); const orig=btn.textContent;
   btn.textContent=T('Submitting...','सबमिट किया जा रहा है...'); btn.disabled=true;
-  fetch(OTP_BACKEND_URL+'/api/submit-registration',{
+  fetch(OTP_BACKEND_URL+'/api/queries/by-partner',{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      service: document.getElementById('rlService').value,
-      name,
-      email,
-      mobile: document.getElementById('rlMobile').value.trim(),
-      purpose: document.getElementById('rlPurpose').value.trim(),
-      address: document.getElementById('rlAddress').value.trim(),
-      referralCode: myPartnerId,
-      viaPartnerReferral: true
-    })
+    headers:{'Content-Type':'application/json','x-session':(typeof qToken==='function'?qToken():''),'x-email':currentUserEmail||''},
+    body:JSON.stringify({ name, mobile, email, concern, dob:v('rlDob'), tob:v('rlTob'), pob:v('rlPob') })
   })
   .then(r=>r.json().then(data=>({status:r.status, data})))
   .then(({status,data})=>{
-    btn.textContent=originalText; btn.disabled=false;
-    if(status!==200 || !data.ok){
-      msg.textContent=data.error || T('Could not submit right now. Please try again.','अभी सबमिट नहीं हो सका। कृपया पुनः प्रयास करें।');
-      return;
-    }
+    btn.textContent=orig; btn.disabled=false;
+    if(status!==200 || !data.ok){ msg.textContent=data.error || T('Could not submit right now. Please try again.','अभी सबमिट नहीं हो सका। कृपया पुनः प्रयास करें।'); return; }
     msg.style.color='#1E7E34';
-    msg.textContent=T('Submitted — you\'ll see this customer under "My Customers" once it\'s reviewed.','सबमिट हो गया — समीक्षा के बाद यह ग्राहक "मेरे ग्राहक" में दिखेगा।');
-    document.getElementById('rlName').value='';
-    document.getElementById('rlMobile').value='';
-    document.getElementById('rlEmail').value='';
-    document.getElementById('rlAddress').value='';
-    document.getElementById('rlPurpose').value='';
+    msg.textContent=T('Query submitted ✓ ','प्रश्न सबमिट हो गया ✓ ')+data.ackNumber+T(' — you can follow it under My Customers and My Channel Partner ID → Queries.',' — आप इसे "मेरे ग्राहक" एवं "मेरी चैनल पार्टनर आईडी → प्रश्न" में देख सकते हैं।');
+    ['rlName','rlMobile','rlEmail','rlDob','rlTob','rlPob','rlConcern'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
     loadChannelPartnerStatus();
   })
-  .catch(()=>{
-    btn.textContent=originalText; btn.disabled=false;
-    msg.textContent=T('Could not reach the server.','सर्वर से संपर्क नहीं हो सका।');
-  });
+  .catch(()=>{ btn.textContent=orig; btn.disabled=false; msg.textContent=T('Could not reach the server.','सर्वर से संपर्क नहीं हो सका।'); });
 }
 
 function selectReferLeadSubTab(tab){
@@ -3402,25 +3370,27 @@ function selectReferLeadSubTab(tab){
 // number (or order number, if it's ever an order-type entry) for each.
 function renderMyCustomers(){
   const box=document.getElementById('rlCustomersList');
-  const mine=myReferralLeads.filter(l=>l.referredByPartner);
-  if(mine.length===0){
-    box.innerHTML='<p class="note">'+T('You haven\'t referred any customers yet.','आपने अभी तक कोई ग्राहक रेफर नहीं किया है।')+'</p>';
+  const qs=(typeof myReferralQueries!=='undefined'?myReferralQueries:[]).filter(q=>q.byMe);
+  const legacy=myReferralLeads.filter(l=>l.referredByPartner);   // registrations submitted before this change
+  if(qs.length===0 && legacy.length===0){
+    box.innerHTML='<p class="note">'+T('You haven\'t submitted any customers yet.','आपने अभी तक कोई ग्राहक सबमिट नहीं किया है।')+'</p>';
     return;
   }
-  box.innerHTML=mine.map(l=>{
-    const statusLabel = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
-    const statusColor = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
-    const when=new Date(l.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-    const numberLine = l.registrationNumber
-      ? (T('Registration Number','पंजीकरण नंबर')+': '+l.registrationNumber)
-      : (l.orderNumber||l.receiptNumber ? (T('Order Number','ऑर्डर नंबर')+': '+(l.orderNumber||l.receiptNumber)) : '');
-    return '<div style="border:1px solid rgba(173,124,60,0.3);border-radius:8px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
-      '<div><span style="font-size:0.95rem;color:var(--ink);font-weight:600;">'+(l.customerName||'—')+'</span><br>'+
-      '<span style="font-size:0.8rem;color:var(--gold-soft);">'+l.service+'</span><br>'+
-      (numberLine ? '<span style="font-size:0.78rem;color:var(--gold-soft);">'+numberLine+'</span><br>' : '')+
+  const card=(name,line1,line2,when,label,color)=>'<div style="border:1px solid rgba(173,124,60,0.3);border-radius:8px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+      '<div><span style="font-size:0.95rem;color:var(--ink);font-weight:600;">'+(name||'—')+'</span><br>'+
+      (line1?'<span style="font-size:0.8rem;color:var(--gold-soft);">'+line1+'</span><br>':'')+
+      (line2?'<span style="font-size:0.78rem;color:var(--gold-soft);">'+line2+'</span><br>':'')+
       '<span style="font-size:0.76rem;color:var(--ink);opacity:0.65;">'+when+'</span></div>'+
-      '<span style="font-size:0.8rem;color:'+statusColor+';white-space:nowrap;">'+statusLabel+'</span>'+
-      '</div>';
+      '<span style="font-size:0.8rem;color:'+color+';white-space:nowrap;">'+label+'</span></div>';
+  const fmt=d=>new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  box.innerHTML=qs.map(q=>{
+    const st = q.status==='converted' ? [T('Converted','परिवर्तित'),'#1E7E34'] : (q.status==='cancelled' ? [T('Cancelled','रद्द'),'#B03A2E'] : [T('Waiting','प्रतीक्षा में'),'var(--gold-soft)']);
+    const moved = q.status==='converted' ? (q.convertedOrderNumber ? T('Moved to order ','ऑर्डर में: ')+q.convertedOrderNumber : T('Moved to registration ','पंजीकरण में: ')+(q.convertedRegistrationNumber||'')) + (q.convertedService?' ('+q.convertedService+')':'') : '';
+    return card(q.customerName, T('Query ','प्रश्न ')+q.ackNumber+(q.mobile?' · '+q.mobile:''), moved, fmt(q.date), st[0], st[1]);
+  }).join('') + legacy.map(l=>{
+    const label = l.status==='confirmed' ? T('Confirmed','कन्फर्म') : (l.status==='not-converted' ? T('Not Converted','सफल नहीं हुआ') : T('Pending','लंबित'));
+    const color = l.status==='confirmed' ? '#1E7E34' : (l.status==='not-converted' ? '#B03A2E' : 'var(--gold-soft)');
+    return card(l.customerName, l.service, l.registrationNumber?T('Registration Number','पंजीकरण नंबर')+': '+l.registrationNumber:'', fmt(l.date), label, color);
   }).join('');
 }
 
@@ -4343,8 +4313,8 @@ function renderGridShop(){
     "ताम्र ऊर्जीकृत ग्रिड, जो आपकी ऊर्जा के किसी विशेष पक्ष को संरेखित करने हेतु मंत्र-सिद्ध किए गए हैं, दो ऊर्जीकरण स्तरों में उपलब्ध हैं — विशिष्ट (1008 माला) एवं महासिद्धि (10008 माला)।"
   );
   const noteText=T(
-    "These grids are launching soon. Tap Notify Me on the grid and energization level you want, and we'll reach out the moment ordering opens.",
-    "ये ग्रिड शीघ्र लॉन्च हो रहे हैं। अपनी पसंद के ग्रिड एवं ऊर्जीकरण स्तर पर 'मुझे सूचित करें' दबाएँ — ऑर्डरिंग शुरू होते ही हम आपसे संपर्क करेंगे।"
+    "Choose your grid and energization level, then tap Buy Now. Pay securely online — your order number and bill are emailed right away, and delivery is coordinated with you via email.",
+    "अपना ग्रिड एवं ऊर्जीकरण स्तर चुनें और “अभी खरीदें” दबाएँ। सुरक्षित ऑनलाइन भुगतान करें — ऑर्डर नंबर एवं बिल तुरंत ईमेल हो जाते हैं, और डिलीवरी आपके साथ ईमेल द्वारा समन्वित की जाती है।"
   );
   const noteV=document.getElementById('gridShopNoteVastu'); if(noteV) noteV.textContent=noteText;
   const noteA=document.getElementById('gridShopNoteAlign'); if(noteA) noteA.textContent=noteText;
@@ -4356,8 +4326,8 @@ function renderGridShop(){
   const uA=document.getElementById('gridUsageAlign'); if(uA) uA.innerHTML=usageHTML;
   const pp=document.getElementById('policyProducts');
   if(pp) pp.innerHTML='<b>'+T('Products:','उत्पाद:')+'</b> '+T(
-    "Once ordering opens, payment for products is collected immediately at checkout and is non-refundable — except where the item arrives damaged, defective, or incorrect. Such claims must be raised with photo/video proof and your order number within a few days of delivery. Returns are shipped back at the customer's own cost; once we receive and verify the returned item, we initiate the full refund, including the return shipping charge.",
-    "ऑर्डरिंग शुरू होने पर, उत्पादों का भुगतान चेकआउट पर तुरंत लिया जाएगा और यह वापसी-योग्य (रिफंडेबल) नहीं होगा — सिवाय इसके कि वस्तु क्षतिग्रस्त, दोषपूर्ण, या गलत प्राप्त हुई हो। ऐसे दावे डिलीवरी के कुछ दिनों के भीतर फोटो/वीडियो प्रमाण एवं ऑर्डर नंबर सहित दर्ज करने होंगे। वस्तु की वापसी ग्राहक के अपने खर्च पर की जाएगी; वापस प्राप्त होकर सत्यापन के पश्चात हम पूर्ण रिफंड आरंभ करेंगे, जिसमें वापसी का शिपिंग शुल्क भी शामिल होगा।"
+    "Payment for products is collected immediately at checkout and is non-refundable — except where the item arrives damaged, defective, or incorrect. Such claims must be raised with photo/video proof and your order number within a few days of delivery. Returns are shipped back at the customer's own cost; once we receive and verify the returned item, we initiate the full refund, including the return shipping charge.",
+    "उत्पादों का भुगतान चेकआउट पर तुरंत लिया जाता है और यह वापसी-योग्य (रिफंडेबल) नहीं होगा — सिवाय इसके कि वस्तु क्षतिग्रस्त, दोषपूर्ण, या गलत प्राप्त हुई हो। ऐसे दावे डिलीवरी के कुछ दिनों के भीतर फोटो/वीडियो प्रमाण एवं ऑर्डर नंबर सहित दर्ज करने होंगे। वस्तु की वापसी ग्राहक के अपने खर्च पर की जाएगी; वापस प्राप्त होकर सत्यापन के पश्चात हम पूर्ण रिफंड आरंभ करेंगे, जिसमें वापसी का शिपिंग शुल्क भी शामिल होगा।"
   );
   const shopIntro=document.getElementById('shopIntroLine');
   if(shopIntro) shopIntro.textContent=T(
@@ -4582,7 +4552,7 @@ const EN_HI = {
   "A yantra's geometry alone — the yantra as metal, ink or diagram — does nothing on its own; it is inert until it is deliberately activated through mantra and sankalp (ritual intention), the same way an object is just an object until someone gives it a specific function. Shubhodayah's stated rationale for offering pre-activated yantras is that many of the problems people bring to Shubhodayah are specific and recurring enough to already have a known, named remedy — a business that stalls repeatedly at the same stage, chronic disputes at home, a Mangal or Shani affliction visible in the chart — and for these, a ready, correctly-activated instrument addresses the issue faster than building something bespoke from first principles. It also gives people a lower-cost, faster-turnaround entry point compared to the full Sutra Service, without diluting the activation process itself.":"किसी यंत्र की केवल ज्यामिति — धातु, स्याही या आरेख के रूप में यंत्र — अपने आप कुछ नहीं करती; जब तक इसे मंत्र और संकल्प (अनुष्ठानिक इच्छाशक्ति) के माध्यम से जानबूझकर सक्रिय न किया जाए, यह निष्क्रिय रहता है, ठीक वैसे ही जैसे कोई वस्तु तब तक केवल वस्तु है जब तक कोई उसे कोई विशिष्ट कार्य न दे। पूर्व-सक्रिय यंत्र प्रदान करने का शुभोदया का बताया गया तर्क यह है कि लोग जो समस्याएँ लेकर आते हैं वे इतनी विशिष्ट और बार-बार होने वाली होती हैं कि उनका एक ज्ञात, नामित उपाय पहले से मौजूद है — कोई व्यवसाय जो बार-बार एक ही चरण पर रुक जाता है, घर में लगातार होने वाले विवाद, कुंडली में दिखाई देने वाला मंगल या शनि दोष — और इनके लिए, एक तैयार, सही ढंग से सक्रिय किया गया उपकरण शुरू से कुछ बनाने की तुलना में समस्या का समाधान अधिक तेज़ी से करता है। यह पूर्ण सूत्र सेवा की तुलना में लोगों को कम लागत वाला, तेज़ विकल्प भी देता है, बिना सक्रियण प्रक्रिया की गुणवत्ता में कोई कमी लाए।",
   "Each yantra is intended to be kept in a clean, respected space once received — typically a home altar or a quiet, undisturbed part of the house — where its consecrated energy can work continuously rather than as a one-time event. Depending on which yantra is chosen, the described effect ranges from unblocking specifically stalled work (Ashta Siddhi Yantra), to protection (Raksha Yantra), to resolving a specific dosh (Mangal, Shani or Pitru Dosh Nivaran Yantras), to easing household conflict (Griha Kalah Nivaran Yantra) or supporting family growth (Santan Prapti Hetu Yantra). As with every Shubhodayah offering, the honest framing matters: a yantra is a support and an alignment instrument, not a guarantee, and it works best alongside — not instead of — ordinary real-world effort in the area it addresses. Choosing the right yantra for your specific situation is the first real decision; Shubhodayah's kundali consultation service (under Chakra & Nadi Healing) is available if you're unsure which one actually matches your chart.":"प्रत्येक यंत्र को प्राप्त होने के बाद एक स्वच्छ, सम्मानित स्थान पर रखा जाना चाहिए — आमतौर पर घर का पूजा स्थान या घर का कोई शांत, अबाधित हिस्सा — जहाँ इसकी अभिमंत्रित ऊर्जा एक बार की घटना के बजाय निरंतर कार्य कर सके। चुने गए यंत्र के अनुसार, इसका प्रभाव विशेष रूप से रुके हुए कार्यों को गति देने (अष्ट सिद्धि यंत्र), सुरक्षा (रक्षा यंत्र), किसी विशिष्ट दोष के निवारण (मंगल, शनि या पितृ दोष निवारण यंत्र), घरेलू कलह को कम करने (गृह कलह निवारण यंत्र), या पारिवारिक वृद्धि में सहायता (संतान प्राप्ति हेतु यंत्र) तक हो सकता है। शुभोदया की हर सेवा की तरह, ईमानदार दृष्टिकोण यहाँ भी महत्वपूर्ण है: यंत्र एक सहायक एवं संरेखण उपकरण है, कोई गारंटी नहीं, और यह संबंधित क्षेत्र में सामान्य वास्तविक प्रयास के साथ मिलकर — उसकी जगह नहीं — सबसे अच्छा कार्य करता है। अपनी विशिष्ट स्थिति के लिए सही यंत्र चुनना पहला वास्तविक निर्णय है; यदि आप निश्चित नहीं हैं कि कौन-सा यंत्र आपकी कुंडली से मेल खाता है, तो शुभोदया की कुंडली परामर्श सेवा (चक्र एवं नाड़ी हीलिंग के अंतर्गत) उपलब्ध है।",
   "अष्ट सिद्धि यंत्र — Ashta Siddhi Yantra":"अष्ट सिद्धि यंत्र",
-  "These yantras are launching soon. Registrations open shortly — check back, or use the survey above to see which one matches you.":"ये यंत्र शीघ्र लॉन्च हो रहे हैं। पंजीकरण जल्द ही शुरू होगा — कृपया दोबारा देखें, या ऊपर दिए गए सर्वे का उपयोग कर जानें कि कौन-सा यंत्र आपके लिए उपयुक्त है।",
+  "Tap Buy to order any yantra. Pay securely online — delivery is coordinated with you via email. Not sure which one fits you? Use the survey above.":"किसी भी यंत्र का ऑर्डर देने हेतु “Buy” दबाएँ। सुरक्षित ऑनलाइन भुगतान करें — डिलीवरी आपके साथ ईमेल द्वारा समन्वित की जाएगी। निश्चित नहीं कि कौन-सा यंत्र उपयुक्त है? ऊपर दिए गए सर्वे का उपयोग करें।",
   "SHUBHODAYAH UNIQUE ID — Your Life Identity & Energy Access":"शुभोदया यूनिक आईडी — आपकी जीवन पहचान एवं ऊर्जा पहुँच",
   "Complete your birth details — this creates your personal energy-identity registration.":"अपना जन्म विवरण पूरा करें — इससे आपकी व्यक्तिगत ऊर्जा-पहचान का पंजीकरण तैयार होता है।",
   "Dowsing is one of the older diagnostic tools in Shubhodayah's practice — a hands-on method using a pendulum to read subtle energy that isn't visible to the eye. In practice, this covers a surprisingly wide range: checking and healing the energy of all 7 chakras in a person, reading the energy of a home or a factory floor, locating gold or silver buried in the ground, and finding underground water sources. Vastu — the traditional Indian science of spatial energy and directional alignment — is folded into the same practice, since a large share of what dowsing is used for in this context is checking whether a living or working space itself carries disturbed or blocked energy, rather than the problem sitting only with the person occupying it.":"डाउज़िंग शुभोदया के अभ्यास के सबसे पुराने निदान उपकरणों में से एक है — एक व्यावहारिक विधि जिसमें आँखों से न दिखने वाली सूक्ष्म ऊर्जा को पढ़ने के लिए पेंडुलम का उपयोग किया जाता है। व्यवहार में, यह एक आश्चर्यजनक रूप से विस्तृत दायरा कवर करता है: किसी व्यक्ति के सभी 7 चक्रों की ऊर्जा की जाँच एवं हीलिंग, घर या फैक्ट्री के फ़र्श की ऊर्जा को पढ़ना, ज़मीन में दबे सोने या चांदी का पता लगाना, तथा भूमिगत जल स्रोतों को खोजना। वास्तु — स्थानिक ऊर्जा एवं दिशात्मक संरेखण का पारंपरिक भारतीय विज्ञान — इसी अभ्यास में शामिल है, क्योंकि इस संदर्भ में डाउज़िंग का अधिकांश उपयोग यह जाँचने के लिए किया जाता है कि क्या रहने या काम करने का स्थान स्वयं अशांत या अवरुद्ध ऊर्जा रखता है, न कि केवल उसमें रहने वाले व्यक्ति में समस्या है।",
@@ -6178,7 +6148,7 @@ function pcpQueriesHTML(list){
     var sub = q.status==='converted' ? ('<br><span class="pcp-entry-date" style="color:#1E7E34;">'+(q.convertedOrderNumber ? T('Moved to order ','ऑर्डर में परिवर्तित: ')+q.convertedOrderNumber : T('Moved to registration ','पंजीकरण में परिवर्तित: ')+(q.convertedRegistrationNumber||''))+(q.convertedService?' ('+q.convertedService+')':'')+'</span>') : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(q.customerName||'—')+'</span> <span class="pcp-entry-meta">('+T('Query','प्रश्न')+')</span><br>'+
-      '<span class="pcp-entry-date">'+(q.ackNumber||'—')+' · '+pcpFmtDate(q.date)+(q.own?' · '+T('My own','मेरा अपना'):'')+'</span>'+sub+'</div>'+
+      '<span class="pcp-entry-date">'+(q.ackNumber||'—')+' · '+pcpFmtDate(q.date)+(q.own?' · '+T('My own','मेरा अपना'):'')+(q.byMe?' · '+T('Submitted by me','मेरे द्वारा सबमिट'):'')+'</span>'+sub+'</div>'+
       '<div style="text-align:right;"><span style="font-size:0.8rem;color:'+st[1]+';white-space:nowrap;">'+st[0]+'</span></div>'+
       '</div>';
   }).join('');
@@ -6346,6 +6316,109 @@ function shopPay(){
     rzp.open();
   })
   .catch(function(){ btn.disabled=false; msg.style.color='#B03A2E'; msg.textContent=T('Could not reach the server. Please try again.','सर्वर से संपर्क नहीं हो सका। कृपया पुनः प्रयास करें।'); });
+}
+
+</script>
+<script>
+
+/* ===== My Channel Partner ID: filters for Orders / Registrations / Queries ===== */
+var pcpF = { orders:{who:'all',st:'all'}, registrations:{who:'all',st:'all'}, queries:{who:'all',st:'all'} };
+function pcpSetF(tab,key,val){ pcpF[tab][key]=val; if(tab==='orders') renderPcpOrders(); else if(tab==='registrations') renderPcpRegistrations(); else renderPcpQueries(); }
+function pcpChips(tab,key,opts,list,match){
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px;">'+opts.map(function(o){
+    var n=list.filter(function(x){return match(x,o[0]);}).length;
+    var on=pcpF[tab][key]===o[0];
+    return '<button type="button" class="pcp-sub-tab'+(on?' active':'')+'" style="font-size:0.78rem;padding:5px 10px;" onclick="pcpSetF(\''+tab+'\',\''+key+'\',\''+o[0]+'\')">'+o[1]+' <span style="opacity:0.65;">('+n+')</span></button>';
+  }).join('')+'</div>';
+}
+function pcpRowLabel(t){ return '<span style="font-size:0.7rem;letter-spacing:0.5px;text-transform:uppercase;color:var(--gold-soft);opacity:0.85;margin:2px 0 6px;display:block;">'+t+'</span>'; }
+function pcpTag(text,color){ return '<span style="display:inline-block;font-size:0.7rem;padding:1px 8px;border-radius:10px;border:1px solid '+(color||'rgba(173,124,60,0.5)')+';color:'+(color||'var(--gold-soft)')+';margin-right:4px;">'+text+'</span>'; }
+function pcpFromQuery(x){ return x.fromQuery ? '<br><span class="pcp-entry-date" style="color:var(--gold-soft);">↳ '+T('from query ','प्रश्न से ')+x.fromQuery+(x.viaMyQuery?' · '+T('submitted by me','मेरे द्वारा सबमिट'):'')+'</span>' : ''; }
+
+/* ---------- ORDERS ---------- */
+function pcpOrderWho(o){ return o.own ? 'own' : 'customers'; }
+function pcpOrderSt(o){ return o.status==='paid' ? 'paid' : 'awaiting'; }
+function pcpOrdersList(){ return (myReferralOrders||[]).filter(function(o){ return o.status==='paid' || (o.kind==='product' && o.status==='created'); }); }
+function renderPcpOrders(){
+  var box=document.getElementById('partnerDashboard'), all=pcpOrdersList(), f=pcpF.orders;
+  var whoOpts=[['all',T('All','सभी')],['own',T('My own','मेरे अपने')],['customers',T('Customers','ग्राहक')]];
+  var stOpts=[['all',T('All','सभी')],['paid',T('Paid','भुगतान हो गया')],['awaiting',T('Awaiting payment','भुगतान लंबित')]];
+  var byWho=all.filter(function(o){return f.who==='all'||pcpOrderWho(o)===f.who;});
+  var shown=byWho.filter(function(o){return f.st==='all'||pcpOrderSt(o)===f.st;});
+  var html=pcpRowLabel(T('Who','किसका'))+pcpChips('orders','who',whoOpts,all,function(o,v){return v==='all'||pcpOrderWho(o)===v;})+
+           pcpRowLabel(T('Status','स्थिति'))+pcpChips('orders','st',stOpts,byWho,function(o,v){return v==='all'||pcpOrderSt(o)===v;});
+  if(!shown.length){ box.innerHTML=html+pcpEmptyMsg(T('No orders match this filter.','इस फ़िल्टर से मेल खाता कोई ऑर्डर नहीं।')); return; }
+  box.innerHTML=html+shown.map(function(o){
+    var bill=o.receiptPdfUrl?'<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+o.receiptPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>':'';
+    var st=o.status==='paid'?['✓ '+T('Paid','भुगतान हो गया'),'#1E7E34']:[T('Awaiting payment','भुगतान लंबित'),'var(--gold-soft)'];
+    return '<div class="pcp-entry"><div>'+
+      (o.own?pcpTag(T('My own','मेरा अपना')):pcpTag(T('Customer','ग्राहक'),'#2E86C1'))+'<br>'+
+      '<span class="pcp-entry-name">'+(o.customerName||'—')+'</span><br>'+
+      '<span class="pcp-entry-meta">'+(o.productName||T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण'))+'</span><br>'+
+      '<span class="pcp-entry-date">'+(o.orderNumber?o.orderNumber+' · ':'')+pcpFmtDate(o.date)+'</span>'+pcpFromQuery(o)+'</div>'+
+      '<div style="text-align:right;"><span style="font-size:0.78rem;color:'+st[1]+';white-space:nowrap;">'+st[0]+'</span><br>'+bill+'</div></div>';
+  }).join('');
+}
+
+/* ---------- REGISTRATIONS ---------- */
+function pcpRegWho(l){ return l.own ? 'own' : 'customers'; }
+function renderPcpRegistrations(){
+  var box=document.getElementById('partnerDashboard'), all=(myReferralLeads||[]), f=pcpF.registrations;
+  var whoOpts=[['all',T('All','सभी')],['own',T('My own','मेरे अपने')],['customers',T('Customers','ग्राहक')]];
+  var stOpts=[['all',T('All','सभी')],['pending',T('Pending','लंबित')],['confirmed',T('Confirmed','कन्फर्म')],['not-converted',T('Not converted','सफल नहीं')]];
+  var byWho=all.filter(function(l){return f.who==='all'||pcpRegWho(l)===f.who;});
+  var shown=byWho.filter(function(l){return f.st==='all'||l.status===f.st;});
+  var html=pcpRowLabel(T('Who','किसका'))+pcpChips('registrations','who',whoOpts,all,function(l,v){return v==='all'||pcpRegWho(l)===v;})+
+           pcpRowLabel(T('Status','स्थिति'))+pcpChips('registrations','st',stOpts,byWho,function(l,v){return v==='all'||l.status===v;});
+  if(!shown.length){ box.innerHTML=html+pcpEmptyMsg(T('No registrations match this filter.','इस फ़िल्टर से मेल खाता कोई पंजीकरण नहीं।')); return; }
+  box.innerHTML=html+shown.map(function(l){
+    var st=l.status==='confirmed'?['✓ '+T('Confirmed','कन्फर्म'),'#1E7E34']:(l.status==='not-converted'?[T('Not converted','सफल नहीं'),'#B03A2E']:[T('Pending','लंबित'),'var(--gold-soft)']);
+    var bill=l.billPdfUrl?'<a class="pcp-bill-icon" href="'+OTP_BACKEND_URL+l.billPdfUrl+'" target="_blank" title="'+T('View Bill','बिल देखें')+'">📄</a>':'';
+    return '<div class="pcp-entry"><div>'+
+      (l.own?pcpTag(T('My own','मेरा अपना')):pcpTag(T('Customer','ग्राहक'),'#2E86C1'))+'<br>'+
+      '<span class="pcp-entry-name">'+(l.customerName||'—')+'</span> <span class="pcp-entry-meta">('+(l.service||'')+')</span><br>'+
+      '<span class="pcp-entry-date">'+(l.registrationNumber||'—')+' · '+pcpFmtDate(l.date)+'</span>'+pcpFromQuery(l)+'</div>'+
+      '<div style="text-align:right;"><span style="font-size:0.78rem;color:'+st[1]+';white-space:nowrap;">'+st[0]+'</span><br>'+bill+'</div></div>';
+  }).join('');
+}
+
+/* ---------- QUERIES ---------- */
+function pcpQWho(q){ return q.own ? 'own' : (q.byMe ? 'byme' : 'customers'); }
+function pcpQSt(q){ return q.status==='converted' ? (q.convertedOrderNumber?'to-order':'to-reg') : q.status; }
+function renderPcpQueries(){
+  var box=document.getElementById('partnerDashboard'), all=(myReferralQueries||[]), f=pcpF.queries;
+  var whoOpts=[['all',T('All','सभी')],['own',T('My own','मेरे अपने')],['customers',T('Customers','ग्राहक')],['byme',T('Submitted by me','मेरे द्वारा सबमिट')]];
+  var whoMatch=function(q,v){ if(v==='all') return true; if(v==='customers') return !q.own; return pcpQWho(q)===v; };   // Customers includes the ones I submitted
+  var stOpts=[['all',T('All','सभी')],['waiting',T('Waiting','प्रतीक्षा में')],['to-reg',T('Moved to registration','पंजीकरण में')],['to-order',T('Moved to order','ऑर्डर में')],['cancelled',T('Cancelled','रद्द')]];
+  var byWho=all.filter(function(q){return whoMatch(q,f.who);});
+  var shown=byWho.filter(function(q){return f.st==='all'||pcpQSt(q)===f.st;});
+  var html=pcpRowLabel(T('Who','किसका'))+pcpChips('queries','who',whoOpts,all,whoMatch)+
+           pcpRowLabel(T('Status','स्थिति'))+pcpChips('queries','st',stOpts,byWho,function(q,v){return v==='all'||pcpQSt(q)===v;});
+  if(!shown.length){ box.innerHTML=html+pcpEmptyMsg(T('No queries match this filter.','इस फ़िल्टर से मेल खाता कोई प्रश्न नहीं।')); return; }
+  box.innerHTML=html+shown.map(function(q){
+    var tag=q.own?pcpTag(T('My own','मेरा अपना')):(q.byMe?pcpTag(T('Submitted by me','मेरे द्वारा सबमिट'),'#8E44AD'):pcpTag(T('Customer','ग्राहक'),'#2E86C1'));
+    var st, sub='';
+    if(q.status==='converted'){
+      st=['● '+T('Closed','बंद'),'#1E7E34'];
+      sub='<br><span class="pcp-entry-date" style="color:#1E7E34;">↳ '+(q.convertedOrderNumber?T('Moved to order ','ऑर्डर में: ')+q.convertedOrderNumber+' · '+T('see Orders','ऑर्डर देखें'):T('Moved to registration ','पंजीकरण में: ')+(q.convertedRegistrationNumber||'')+' · '+T('see Registrations','पंजीकरण देखें'))+(q.convertedService?' ('+q.convertedService+')':'')+'</span>';
+    } else if(q.status==='cancelled'){ st=[T('Cancelled','रद्द'),'#B03A2E']; }
+    else { st=[T('Waiting','प्रतीक्षा में'),'var(--gold-soft)']; }
+    return '<div class="pcp-entry"><div>'+tag+'<br>'+
+      '<span class="pcp-entry-name">'+(q.customerName||'—')+'</span>'+(q.mobile?' <span class="pcp-entry-meta">· '+q.mobile+'</span>':'')+'<br>'+
+      '<span class="pcp-entry-date">'+(q.ackNumber||'—')+' · '+pcpFmtDate(q.date)+'</span>'+sub+'</div>'+
+      '<div style="text-align:right;"><span style="font-size:0.78rem;color:'+st[1]+';white-space:nowrap;">'+st[0]+'</span></div></div>';
+  }).join('');
+}
+
+/* ---------- ALL (everything, newest first, same labels) ---------- */
+function renderPcpAll(){
+  var box=document.getElementById('partnerDashboard');
+  var rows=[];
+  pcpOrdersList().forEach(function(o){ rows.push({d:o.date, h:'<div class="pcp-entry"><div>'+pcpTag(T('Order','ऑर्डर'))+(o.own?pcpTag(T('My own','मेरा अपना')):pcpTag(T('Customer','ग्राहक'),'#2E86C1'))+'<br><span class="pcp-entry-name">'+(o.customerName||'—')+'</span> <span class="pcp-entry-meta">('+(o.productName||'CEI & LPI')+')</span><br><span class="pcp-entry-date">'+(o.orderNumber||'')+' · '+pcpFmtDate(o.date)+'</span>'+pcpFromQuery(o)+'</div><div style="text-align:right;font-size:0.78rem;color:'+(o.status==='paid'?'#1E7E34':'var(--gold-soft)')+';">'+(o.status==='paid'?T('Paid','भुगतान हो गया'):T('Awaiting payment','भुगतान लंबित'))+'</div></div>'}); });
+  (myReferralLeads||[]).forEach(function(l){ rows.push({d:l.date, h:'<div class="pcp-entry"><div>'+pcpTag(T('Registration','पंजीकरण'))+(l.own?pcpTag(T('My own','मेरा अपना')):pcpTag(T('Customer','ग्राहक'),'#2E86C1'))+'<br><span class="pcp-entry-name">'+(l.customerName||'—')+'</span> <span class="pcp-entry-meta">('+(l.service||'')+')</span><br><span class="pcp-entry-date">'+(l.registrationNumber||'—')+' · '+pcpFmtDate(l.date)+'</span>'+pcpFromQuery(l)+'</div><div style="text-align:right;font-size:0.78rem;color:'+(l.status==='confirmed'?'#1E7E34':(l.status==='not-converted'?'#B03A2E':'var(--gold-soft)'))+';">'+(l.status==='confirmed'?T('Confirmed','कन्फर्म'):(l.status==='not-converted'?T('Not converted','सफल नहीं'):T('Pending','लंबित')))+'</div></div>'}); });
+  (myReferralQueries||[]).forEach(function(q){ var cl=q.status==='converted'; rows.push({d:q.date, h:'<div class="pcp-entry"><div>'+pcpTag(T('Query','प्रश्न'))+(q.own?pcpTag(T('My own','मेरा अपना')):(q.byMe?pcpTag(T('Submitted by me','मेरे द्वारा सबमिट'),'#8E44AD'):pcpTag(T('Customer','ग्राहक'),'#2E86C1')))+'<br><span class="pcp-entry-name">'+(q.customerName||'—')+'</span><br><span class="pcp-entry-date">'+(q.ackNumber||'')+' · '+pcpFmtDate(q.date)+'</span>'+(cl?'<br><span class="pcp-entry-date" style="color:#1E7E34;">↳ '+(q.convertedOrderNumber?T('Moved to order ','ऑर्डर में: ')+q.convertedOrderNumber:T('Moved to registration ','पंजीकरण में: ')+(q.convertedRegistrationNumber||''))+'</span>':'')+'</div><div style="text-align:right;font-size:0.78rem;color:'+(cl?'#1E7E34':(q.status==='cancelled'?'#B03A2E':'var(--gold-soft)'))+';">'+(cl?T('Closed','बंद'):(q.status==='cancelled'?T('Cancelled','रद्द'):T('Waiting','प्रतीक्षा में')))+'</div></div>'}); });
+  rows.sort(function(a,b){ return new Date(b.d)-new Date(a.d); });
+  box.innerHTML = rows.length ? rows.map(function(r){return r.h;}).join('') : pcpEmptyMsg(T('Nothing here yet — orders, registrations and queries with your code will appear here.','अभी कुछ नहीं — आपके कोड वाले ऑर्डर, पंजीकरण एवं प्रश्न यहाँ दिखेंगे।'));
 }
 
 </script>
