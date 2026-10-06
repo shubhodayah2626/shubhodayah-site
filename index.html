@@ -3489,15 +3489,15 @@ function updateKachaBillAmount(){
         // if the input changed while this request was in flight, ignore this stale result
         if(document.getElementById('kachaReferralInput').value.trim()!==code) return;
         if(data && data.valid){
-          discountRow.style.display='flex';
-          amountEl.textContent='₹1,999';
+          discountRow.style.display='none';
+          amountEl.textContent='₹2,199';
           msgEl.style.color='#27AE60';
           msgEl.textContent=T('Valid referral code ✓','मान्य रेफरल कोड ✓');
         }else{
           discountRow.style.display='none';
           amountEl.textContent='₹2,199';
           msgEl.style.color='#C0392B';
-          msgEl.textContent=T('Code not recognized — no discount applied.','कोड मान्य नहीं है — कोई छूट लागू नहीं होगी।');
+          msgEl.textContent=T('Code not recognized.','कोड मान्य नहीं है।');
         }
       })
       .catch(()=>{
@@ -3590,7 +3590,7 @@ function syncOrdersFromServer(email){
           userOrders.push({
             receiptNumber:o.receiptNumber, orderNumber:o.orderNumber||'',
             label:o.productName||T('Product','उत्पाद'),
-            when:new Date(o.paidAt||o.createdAt).toLocaleDateString(),
+            when:new Date(o.paidAt||o.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}),
             status:o.status==='paid' ? T('Paid','भुगतान हो गया') : T('Awaiting payment','भुगतान लंबित'),
             amount:o.amount?Math.round(o.amount/100):null,
             unpaid:o.status!=='paid',
@@ -3603,7 +3603,7 @@ function syncOrdersFromServer(email){
           receiptNumber:o.receiptNumber,
           orderNumber:o.orderNumber||'',
           label:T('CEI & LPI Analysis','CEI एवं LPI विश्लेषण'),
-          when:o.paidAt?new Date(o.paidAt).toLocaleDateString():'',
+          when:o.paidAt?new Date(o.paidAt).toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}):'',
           status:o.reportPdfUrl?T('Report Ready','रिपोर्ट तैयार है'):(o.reportOtpUsed?T('Unlocked — Generating Report','अनलॉक किया गया — रिपोर्ट तैयार हो रही है'):T('Paid — Awaiting Portal Unlock','भुगतान हो गया — पोर्टल अनलॉक लंबित')),
           amount:o.amount?Math.round(o.amount/100):null,
           details:Object.keys(detailLinks).length?detailLinks:null
@@ -3864,7 +3864,7 @@ function proceedCheckout(){
   cart.forEach(it=>{
     userOrders.unshift({
       label: it.name,
-      when: new Date().toLocaleDateString(),
+      when: new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}),
       status: 'Awaiting Payment Setup',
       amount: it.price || null,
       details: {}
@@ -5903,7 +5903,7 @@ function refCheck(id){
         if(document.getElementById(id).value.trim()!==code) return;
         refState[id]=!!d.valid;
         msg.style.color=d.valid?'#1E7E34':'#B03A2E';
-        msg.textContent=d.valid ? ('✓ '+T('Valid code','मान्य कोड')+(d.name?' — '+d.name:'')) : ('✗ '+T('This code is not valid','यह कोड मान्य नहीं है'));
+        msg.textContent=d.valid ? ('✓ '+T('Valid code','मान्य कोड')) : ('✗ '+T('This code is not valid','यह कोड मान्य नहीं है'));
       })
       .catch(function(){ refState[id]=null; msg.textContent=''; });
   },400);
