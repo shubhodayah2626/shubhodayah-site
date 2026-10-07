@@ -3527,6 +3527,11 @@ function startCeiLpiCheckout(){
   })
   .then(r=>r.json())
   .then(orderData=>{
+    if(orderData && orderData.alreadyPaid){
+      alert(T('You have already paid for CEI & LPI (order '+orderData.orderNumber+') and not used it yet — no need to pay again.\n\nWe have just emailed you the “Open the portal” button. Open that email and tap the button.',
+              'आप CEI एवं LPI का भुगतान पहले ही कर चुके हैं (ऑर्डर '+orderData.orderNumber+') और अभी उसका उपयोग नहीं हुआ है — दोबारा भुगतान की ज़रूरत नहीं।\n\nहमने अभी आपको “पोर्टल खोलें” बटन ईमेल किया है। वह ईमेल खोलकर बटन दबाएँ।'));
+      return;
+    }
     if(!orderData || !orderData.razorpayOrderId){
       alert(T('Could not start payment. Please try again shortly.','भुगतान शुरू नहीं हो सका। कृपया थोड़ी देर बाद पुनः प्रयास करें।'));
       return;
@@ -3553,8 +3558,8 @@ function startCeiLpiCheckout(){
             return;
           }
           syncOrdersFromServer(currentUserEmail);
-          alert(T('Payment successful! A 6-digit unlock code has been emailed to you. Tap OK to continue to the CEI & LPI portal — enter that code there to generate your report.',
-                  'भुगतान सफल रहा! आपको एक 6-अंकों का अनलॉक कोड ईमेल किया गया है। CEI एवं LPI पोर्टल पर जारी रखने हेतु OK दबाएँ — रिपोर्ट जनरेट करने हेतु वहाँ वह कोड दर्ज करें।'));
+          alert(T('Payment successful! Tap OK to open the CEI & LPI portal. (Your bill and a backup unlock code are in your email — no need to pay again.)',
+                  'भुगतान सफल रहा! CEI एवं LPI पोर्टल खोलने हेतु OK दबाएँ। (आपका बिल और बैकअप अनलॉक कोड आपके ईमेल में है — दोबारा भुगतान न करें।)'));
           window.location.href=verifyData.redirectUrl;
         })
         .catch(()=>{
@@ -3571,6 +3576,11 @@ function startCeiLpiCheckout(){
 /* Pulls this customer's paid CEI/LPI orders from the backend database so
    "My Orders" survives page reloads and reappears on any device they sign
    into with the same email — instead of only living in this page's memory. */
+function ceiResendUnlock(orderId){
+  fetch(OTP_BACKEND_URL+'/api/payment/resend-unlock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:orderId,email:currentUserEmail})})
+    .then(r=>r.json()).then(d=>{ alert(d && d.success ? T('Done — check your email for the “Open the portal” button.','हो गया — “पोर्टल खोलें” बटन के लिए अपना ईमेल देखें।') : ((d && d.error) || T('Could not send. Please try again.','भेजा नहीं जा सका। पुनः प्रयास करें।'))); })
+    .catch(()=>alert(T('Could not reach the server. Please try again.','सर्वर से संपर्क नहीं हो सका। पुनः प्रयास करें।')));
+}
 function syncOrdersFromServer(email){
   fetch(OTP_BACKEND_URL+'/api/orders?email='+encodeURIComponent(email))
     .then(r=>r.json())
@@ -3585,6 +3595,9 @@ function syncOrdersFromServer(email){
         }
         if(o.reportPdfUrl){
           detailLinks[T('CEI & LPI Report','CEI एवं LPI रिपोर्ट')]='<a href="'+o.reportPdfUrl+'" target="_blank" style="color:var(--gold);">'+T('View','देखें')+'</a> &nbsp;|&nbsp; <a href="'+o.reportPdfUrl+'" download style="color:var(--gold);">'+T('Download','डाउनलोड करें')+'</a>';
+        }
+        if(o.kind!=='product' && o.status==='paid' && !o.reportPdfUrl && o._id){
+          detailLinks[T('Portal','पोर्टल')]='<a href="#" onclick="ceiResendUnlock(\''+o._id+'\');return false;" style="color:var(--gold);">'+T('Email me the “Open the portal” button again','“पोर्टल खोलें” बटन फिर से ईमेल करें')+'</a>';
         }
         if(o.kind==='product'){
           const pd={};
