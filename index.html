@@ -1035,6 +1035,10 @@
   .q-note.ok{background:rgba(39,174,96,0.10);color:#1E6B3A;}
   .q-note.no{background:rgba(169,68,66,0.10);color:#A94442;}
   .q-view-reg{display:block;width:100% !important;margin-top:10px;min-height:44px;}
+.field.req > label::after{content:' *';color:#C0392B;}
+.field.req-bad input,.field.req-bad textarea,.field.req-bad select{border-color:#C0392B !important;background:#fff5f4;}
+.req-msg{color:#C0392B;font-size:0.8rem;margin-top:4px;font-weight:600;}
+.req-legend{font-size:0.78rem;color:#7a6a55;margin:0 0 8px;}
 </style>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
@@ -2274,20 +2278,21 @@
     <p class="sub">Cosmic Energy Alignment Consultancy Registration</p>
 
     <div id="regFormFields">
-      <div class="field"><label>Full Name</label><input type="text" id="regName"></div>
-      <div class="field"><label>Mobile Number</label><input type="tel" id="regMobile"></div>
-      <div class="field"><label>Email ID</label><input type="email" id="regEmail"></div>
-      <div class="field" id="regCategoryField" style="display:none;">
+      <p class="req-legend">* = required · बाकी कॉलम छोड़ सकते हैं</p>
+      <div class="field req"><label>Full Name</label><input type="text" id="regName"></div>
+      <div class="field req"><label>Mobile Number</label><input type="tel" id="regMobile"></div>
+      <div class="field req"><label>Email ID</label><input type="email" id="regEmail"></div>
+      <div class="field req" id="regCategoryField" style="display:none;">
         <label id="regCategoryLabel">Which service are you interested in?</label>
         <select id="regCategory"></select>
       </div>
       <div class="field" id="regPobField"><label id="regPobLabel">Place of Birth</label><input type="text" id="regPob"></div>
       <div class="field" id="regTobField"><label>Time of Birth</label><input type="time" id="regTob"></div>
       <div class="field" id="regDobField"><label>Date of Birth</label><input type="date" id="regDob"></div>
-      <div class="field" id="regLocationField" style="display:none;"><label>Location / Area</label><input type="text" id="regLocation" placeholder="e.g. Gomti Nagar"></div>
-      <div class="field" id="regHouseNoField" style="display:none;"><label>House Number</label><input type="text" id="regHouseNo" placeholder="e.g. House No. 24, Street 3"></div>
-      <div class="field" id="regPincodeField" style="display:none;"><label>PIN Code</label><input type="text" id="regPincode" inputmode="numeric" maxlength="6" placeholder="e.g. 226010"></div>
-      <div class="field"><label id="regPurposeLabel">Describe Your Concern</label><textarea rows="3" id="regPurpose" placeholder="Please describe what you'd like help with..."></textarea></div>
+      <div class="field req" id="regLocationField" style="display:none;"><label>Location / Area</label><input type="text" id="regLocation" placeholder="e.g. Gomti Nagar"></div>
+      <div class="field req" id="regHouseNoField" style="display:none;"><label>House Number</label><input type="text" id="regHouseNo" placeholder="e.g. House No. 24, Street 3"></div>
+      <div class="field req" id="regPincodeField" style="display:none;"><label>PIN Code</label><input type="text" id="regPincode" inputmode="numeric" maxlength="6" placeholder="e.g. 226010"></div>
+      <div class="field req"><label id="regPurposeLabel">Describe Your Concern</label><textarea rows="3" id="regPurpose" placeholder="Please describe what you'd like help with..."></textarea></div>
 
       <div class="field" id="regRefCodeField"><label>Referral Code (optional)</label><input type="text" id="regRefCode" placeholder="आप इस कॉलम को छोड़ सकते हैं" autocomplete="off" autocapitalize="characters" oninput="refCheck('regRefCode')"><p class="form-msg" id="regRefCodeMsg" style="margin-top:4px;"></p></div>
       <label style="font-size:0.85rem;color:#4A3626;display:flex;gap:8px;margin:16px 0;">
@@ -3733,8 +3738,41 @@ function showRegSuccess(message){
     +'</div>';
   setTimeout(()=>closeModal('regModal'), 3500);
 }
+// ---- Required fields: shows "Not filled" in red under each empty one ----
+function reqMark(el, en, hi){
+  var f=el.closest('.field')||el.parentNode; f.classList.add('req-bad');
+  var m=f.querySelector('.req-msg'); if(!m){ m=document.createElement('div'); m.className='req-msg'; f.appendChild(m); }
+  m.textContent=T(en||'Not filled', hi||'नहीं भरा');
+  var clear=function(){ f.classList.remove('req-bad'); m.textContent=''; };
+  el.addEventListener('input',clear,{once:true}); el.addEventListener('change',clear,{once:true});
+}
+// rules: [id, test(value) → true if OK (default: not empty), English msg, Hindi msg]
+function reqCheck(rules){
+  var first=null;
+  rules.forEach(function(r){
+    var el=document.getElementById(r[0]); if(!el) return;
+    var fld=el.closest('.field'); if(fld && (fld.style.display==='none' || fld.offsetParent===null)) return; // hidden field → not asked
+    var val=String(el.value||'').trim();
+    var ok=r[1]?r[1](val):!!val;
+    if(!ok){ reqMark(el, r[2]||'Not filled', r[3]||'नहीं भरा'); if(!first) first=el; }
+  });
+  if(first){ try{ first.scrollIntoView({behavior:'smooth',block:'center'}); first.focus({preventScroll:true}); }catch(e){} return false; }
+  return true;
+}
+var REQ_MOBILE=function(v){ return v.replace(/\D/g,'').length>=10; };
+var REQ_EMAIL=function(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); };
+
 function submitRegistration(){
   const msg=document.getElementById('regMsg');
+  if(!reqCheck([
+    ['regName'],
+    ['regMobile', REQ_MOBILE, 'Not filled — enter a 10-digit mobile number', 'नहीं भरा — 10 अंकों का मोबाइल नंबर दर्ज करें'],
+    ['regEmail', REQ_EMAIL, 'Not filled — enter a valid email', 'नहीं भरा — सही ईमेल दर्ज करें'],
+    ['regCategory'],
+    ['regLocation'], ['regHouseNo'],
+    ['regPincode', function(v){ return /^\d{6}$/.test(v); }, 'Not filled — enter the 6-digit PIN code', 'नहीं भरा — 6 अंकों का पिन कोड दर्ज करें'],
+    ['regPurpose']
+  ])){ msg.textContent=T('Please fill the boxes marked "Not filled".','कृपया "नहीं भरा" वाले कॉलम भरें।'); return; }
   const declared=document.getElementById('regDeclare').checked;
   if(!declared){ msg.textContent=T('Please confirm the declaration checkbox.','कृपया घोषणा चेकबॉक्स की पुष्टि करें।'); return; }
 
@@ -6010,12 +6048,13 @@ function openQueryForm(){
     '<p class="sub">'+T('Tell us your problem — our team will contact you.','अपनी समस्या बताएं — हमारी टीम आपसे संपर्क करेगी।')+'</p>'+
     '<div id="qFormFields">'+
       (verified?qVerifiedHTML():qVerifyHTML(intro))+
-      '<div class="field"><label>'+T('Full Name','पूरा नाम')+'</label><input type="text" id="qName" value="'+qEsc(currentUserName||'')+'"></div>'+
-      '<div class="field"><label>'+T('Mobile Number','मोबाइल नंबर')+'</label><input type="tel" id="qMobile" inputmode="tel"></div>'+
-      '<div class="field"><label>'+T('Place of Birth','जन्म स्थान')+'</label><input type="text" id="qPob"></div>'+
-      '<div class="field"><label>'+T('Time of Birth','जन्म समय')+'</label><input type="time" id="qTob"></div>'+
-      '<div class="field"><label>'+T('Date of Birth','जन्म तिथि')+'</label><input type="date" id="qDob"></div>'+
-      '<div class="field"><label>'+T('Your Concern / Problem','आपकी समस्या')+'</label><textarea rows="5" id="qConcern" placeholder="'+qEsc(T('Please describe your problem in your own words...','कृपया अपनी समस्या अपने शब्दों में लिखें...'))+'"></textarea></div>'+
+      '<p class="req-legend">'+T('* = required · other boxes can be left empty','* = ज़रूरी · बाकी कॉलम छोड़ सकते हैं')+'</p>'+
+      '<div class="field req"><label>'+T('Full Name','पूरा नाम')+'</label><input type="text" id="qName" value="'+qEsc(currentUserName||'')+'"></div>'+
+      '<div class="field req"><label>'+T('Mobile Number','मोबाइल नंबर')+'</label><input type="tel" id="qMobile" inputmode="tel"></div>'+
+      '<div class="field"><label>'+T('Place of Birth (optional)','जन्म स्थान (वैकल्पिक)')+'</label><input type="text" id="qPob" placeholder="आप इस कॉलम को छोड़ सकते हैं"></div>'+
+      '<div class="field"><label>'+T('Time of Birth (optional)','जन्म समय (वैकल्पिक)')+'</label><input type="time" id="qTob"></div>'+
+      '<div class="field"><label>'+T('Date of Birth (optional)','जन्म तिथि (वैकल्पिक)')+'</label><input type="date" id="qDob"></div>'+
+      '<div class="field req"><label>'+T('Your Concern / Problem','आपकी समस्या')+'</label><textarea rows="5" id="qConcern" placeholder="'+qEsc(T('Please describe your problem in your own words...','कृपया अपनी समस्या अपने शब्दों में लिखें...'))+'"></textarea></div>'+
       refFieldHTML('qRefCode')+
       '<label style="font-size:0.85rem;display:flex;gap:8px;margin:16px 0;align-items:flex-start;"><input type="checkbox" id="qDeclare"> '+T('I declare that the above information is true and correct to the best of my knowledge.','मैं घोषणा करता/करती हूँ कि उपरोक्त जानकारी मेरी जानकारी के अनुसार सत्य और सही है।')+'</label>'+
       '<button class="btn" style="width:100%;" id="qSubmitBtn" onclick="submitQuery()">'+T('Submit Query','प्रश्न भेजें')+'</button>'+
@@ -6029,6 +6068,11 @@ function submitQuery(){
   var v=function(id){ return document.getElementById(id).value.trim(); };
   var p={name:v('qName'), mobile:v('qMobile'), pob:v('qPob'), tob:v('qTob'), dob:v('qDob'), concern:v('qConcern')};
   if(!qReady()){ msg.textContent=T('Please verify your email first — tap "Send Code" above.','कृपया पहले अपना ईमेल सत्यापित करें — ऊपर "कोड भेजें" दबाएं।'); var e=document.getElementById('qEmail'); if(e) e.focus(); return; }
+  if(!reqCheck([
+    ['qName'],
+    ['qMobile', REQ_MOBILE, 'Not filled — enter a 10-digit mobile number', 'नहीं भरा — 10 अंकों का मोबाइल नंबर दर्ज करें'],
+    ['qConcern', function(v){ return v.length>=5; }, 'Not filled — please describe your concern', 'नहीं भरा — कृपया अपनी समस्या बताएं']
+  ])){ msg.textContent=T('Please fill the boxes marked "Not filled".','कृपया "नहीं भरा" वाले कॉलम भरें।'); return; }
   if(!p.name){ msg.textContent=T('Please enter your name.','कृपया अपना नाम दर्ज करें।'); return; }
   if(p.mobile.replace(/\D/g,'').length<10){ msg.textContent=T('Please enter a valid mobile number.','कृपया सही मोबाइल नंबर दर्ज करें।'); return; }
   if(p.concern.length<5){ msg.textContent=T('Please describe your concern.','कृपया अपनी समस्या बताएं।'); return; }
