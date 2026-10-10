@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F6E8D7">
+<title>Your Energised Card · Shubhodayah</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F6E8D7;--card:#FFFAF3;--ink:#3E2714;--muted:#8A6A4C;--copper:#B06A3B;--copper-dk:#8C4F27;--line:#E6D2BA;--soft:#F0E2D0}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink)}
+  body{font-family:'Lora',Georgia,serif;min-height:100vh;
+    background:radial-gradient(120% 60% at 50% 0%,#FCF4EA 0%,var(--paper) 60%,#F0DEC8 100%) fixed;
+    padding:max(16px,env(safe-area-inset-top)) 16px 36px}
+  .wrap{max-width:520px;margin:0 auto}
+  .frame{border:1.5px solid var(--copper);border-radius:20px;padding:5px}
+  .inner{border:1px solid var(--line);border-radius:16px;background:rgba(255,250,243,.6);padding:20px 16px 24px;min-height:calc(100vh - 80px);display:flex;flex-direction:column}
+  .rule{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--copper)}
+  .rule:before,.rule:after{content:"";flex:1;height:1px;background:var(--copper);opacity:.5}
+  .rule span{width:7px;height:7px;background:var(--copper);transform:rotate(45deg)}
+  .cap{font-family:'Cinzel',serif;letter-spacing:.22em;font-size:11px;color:var(--muted);text-align:center}
+
+  /* seal (opening screen) */
+  .seal{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;padding:20px 0;-webkit-tap-highlight-color:transparent}
+  .seal img{width:min(270px,72vw);border-radius:14px;mix-blend-mode:multiply;animation:breathe 3.2s ease-in-out infinite}
+  .seal .tap{margin-top:22px;display:inline-flex;align-items:center;gap:10px;border:1.3px solid var(--copper);color:var(--copper-dk);border-radius:99px;padding:12px 22px;
+    font-family:'Cinzel',serif;font-size:13px;letter-spacing:.14em;background:var(--card)}
+  .seal .hint{margin-top:12px;font-size:13px;color:var(--muted)}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+  .seal.loading .tap{opacity:.55}
+
+  /* opened card */
+  #open{display:none}
+  #open.on{display:block;animation:rise .6s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .logo-sm{display:block;width:min(170px,46vw);margin:0 auto;border-radius:10px;mix-blend-mode:multiply}
+  h1{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:31px;text-align:center;line-height:1.15;margin-top:4px}
+  .sub{text-align:center;color:var(--muted);font-size:15px;margin-top:3px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 16px;margin-top:16px}
+  .box-t{font-family:'Cinzel',serif;letter-spacing:.16em;font-size:11px;color:var(--copper-dk);padding:10px 0 4px}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 0;border-top:1px solid var(--soft)}
+  .row:first-of-type{border-top:0}
+  .row .l{color:var(--muted);font-size:13px;flex:none;max-width:45%}
+  .row .v{text-align:right;font-size:15px;word-break:break-word}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:transparent;border:0;color:var(--ink);font:inherit;font-size:15px;cursor:pointer;padding:0}
+  .chip svg{width:15px;height:15px;color:var(--copper)}
+  .reveal{background:transparent;border:1px solid var(--line);color:var(--copper-dk);border-radius:99px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+  .docs{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:16px}
+  .doc{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .doc-h{width:100%;display:flex;gap:12px;align-items:center;padding:14px;background:transparent;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+  .ico{flex:none;width:40px;height:48px;border-radius:7px;background:var(--copper);color:#FFF8EF;font-family:'Cinzel',serif;font-size:10px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px}
+  .doc-h b{display:block;font-family:'Cormorant Garamond',serif;font-size:20px;line-height:1.2;font-weight:600;word-break:break-word}
+  .doc-h small{color:var(--muted);font-size:12.5px}
+  .chev{margin-left:auto;flex:none;width:20px;height:20px;color:var(--copper);transition:transform .25s}
+  .doc.open .chev{transform:rotate(180deg)}
+  .doc-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+  .doc.open .doc-b{grid-template-rows:1fr}
+  .doc-b>div{overflow:hidden}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px 14px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:7px;min-height:46px;border-radius:11px;text-decoration:none;font-family:'Cinzel',serif;font-size:13px;letter-spacing:.08em;font-weight:600}
+  .btn.view{background:var(--copper);color:#FFF8EF}
+  .btn.dl{border:1.3px solid var(--copper);color:var(--copper-dk)}
+  .btn svg{width:16px;height:16px}
+  .tag{text-align:center;margin-top:22px;font-family:'Cinzel',serif;letter-spacing:.3em;font-size:11px;color:var(--copper-dk)}
+  .state{text-align:center;padding:16px 4px}
+  .state h2{font-family:'Cormorant Garamond',serif;font-size:24px;margin-bottom:8px}
+  .state p{color:var(--muted);line-height:1.6;font-size:15px}
+  footer{margin-top:auto;padding-top:18px;text-align:center}
+  footer .brand{font-family:'Cinzel',serif;letter-spacing:.22em;font-size:10px;color:var(--muted);line-height:1.8}
+  footer a{color:var(--copper-dk);text-decoration:none;font-size:13.5px}
+  .contact{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:99px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.on{opacity:1}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="frame"><div class="inner">
+
+  <div class="seal loading" id="seal" role="button" tabindex="0" aria-label="Open your card">
+    <img src="card-logo.jpg" alt="Shubhodayah — Align · Heal · Elevate">
+    <span class="tap" id="tapTxt">OPENING…</span>
+    <p class="hint" id="hint">Preparing your energised card</p>
+  </div>
+
+  <main id="open"></main>
+
+  <footer>
+    <div class="rule"><span></span></div>
+    <div class="brand">SHUBHODAYAH COSMIC ENERGY<br>ALIGNMENT CONSULTANCY</div>
+    <div class="contact">
+      <a href="mailto:shubhodayah@gmail.com">shubhodayah@gmail.com</a><span style="color:var(--line)">•</span>
+      <a href="https://shubhodayah.com">shubhodayah.com</a>
+    </div>
+  </footer>
+</div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+  // ======= SET THIS to your Render backend address (no trailing slash) =======
+  var API_BASE = 'https://shubhodayah-backend.onrender.com';
+
+  var seal=document.getElementById('seal'), openEl=document.getElementById('open'), DATA=null, ERR=null;
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function size(b){if(!b)return'';return b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB'}
+  function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},1500)}
+  var I={
+    copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
+    eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+    down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>',
+    chev:'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>'
+  };
+
+  var key=(new URLSearchParams(location.search).get('k')||location.hash.replace('#','')||'').trim().toUpperCase();
+  var slow=setTimeout(function(){document.getElementById('hint').textContent='Waking the server — this can take up to a minute the first time.'},4000);
+
+  function ready(){
+    clearTimeout(slow); seal.classList.remove('loading');
+    document.getElementById('tapTxt').textContent='TAP TO OPEN YOUR CARD';
+    document.getElementById('hint').textContent=DATA?'Your energised Shubhodayah card':'';
+  }
+  function load(n){
+    fetch(API_BASE+'/api/cards/public/'+encodeURIComponent(key),{cache:'no-store'})
+      .then(function(r){if(r.status===404)throw{nf:1};if(!r.ok)throw new Error(r.status);return r.json()})
+      .then(function(d){DATA=d;ready()})
+      .catch(function(e){
+        if(e&&e.nf){ERR='nf';return ready()}
+        if(n<4)return setTimeout(function(){load(n+1)},5000);
+        ERR='net';ready();
+      });
+  }
+  function openCard(){
+    if(seal.classList.contains('loading'))return;
+    seal.style.display='none'; openEl.className='on';
+    if(ERR==='nf')return state('Card not found','This QR is not linked to any Shubhodayah card. Please contact us and we will help you right away.');
+    if(ERR==='net')return state('Could not open right now','Please check your internet connection and scan again in a minute.');
+    if(DATA.status!=='active')return state('This card is no longer active','Please contact Shubhodayah for your updated card.');
+    render(DATA);
+  }
+  seal.onclick=openCard; seal.onkeydown=function(e){if(e.key==='Enter'||e.key===' ')openCard()};
+  function state(t,m){openEl.innerHTML='<img class="logo-sm" src="card-logo.jpg" alt="Shubhodayah"><div class="rule"><span></span></div><div class="state"><h2>'+esc(t)+'</h2><p>'+m+'</p></div>'}
+
+  function render(d){
+    var id=d.personal_id||d.card_code, sub=[d.city,d.category].filter(Boolean).join(' · ');
+    var h='<img class="logo-sm" src="card-logo.jpg" alt="Shubhodayah"><div class="rule"><span></span></div>'
+      +'<div class="cap">SHUBHODAYAH · ENERGISED CARD</div><h1>'+esc(d.customer_name)+'</h1>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'');
+    h+='<section class="box"><div class="box-t">YOUR SACRED DETAILS</div>'
+      +'<div class="row"><span class="l">Personalised ID</span><span class="v"><button class="chip" data-copy="'+esc(id)+'">'+esc(id)+I.copy+'</button></span></div>'
+      +(d.category?'<div class="row"><span class="l">Card category</span><span class="v">'+esc(d.category)+'</span></div>':'');
+    (d.details||[]).forEach(function(x,i){
+      h+='<div class="row"><span class="l">'+esc(x.label)+'</span><span class="v">'
+        +(x.tap?'<button class="reveal" data-i="'+i+'">Tap to show</button>':esc(x.value))+'</span></div>';
+    });
+    h+='</section>';
+    if(d.docs.length){
+      h+='<ul class="docs">'+d.docs.map(function(x,i){
+        return '<li class="doc'+(d.docs.length===1?' open':'')+'"><button class="doc-h" aria-expanded="'+(d.docs.length===1)+'"><span class="ico">PDF</span><span><b>'+esc(x.label)+'</b><small>'+esc(size(x.size_bytes))+'</small></span>'+I.chev+'</button>'
+          +'<div class="doc-b"><div><div class="btns"><a class="btn view" href="'+esc(x.view_url)+'" target="_blank" rel="noopener">'+I.eye+'View</a>'
+          +'<a class="btn dl" href="'+esc(x.download_url)+'">'+I.down+'Download</a></div></div></div></li>';
+      }).join('')+'</ul>';
+    } else h+='<div class="state"><p>Your documents are being prepared and will appear here soon.</p></div>';
+    h+='<div class="tag">ALIGN · HEAL · ELEVATE</div>';
+    openEl.innerHTML=h; document.title=d.customer_name+' · Shubhodayah';
+
+    openEl.querySelectorAll('[data-copy]').forEach(function(b){b.onclick=function(){
+      var v=b.getAttribute('data-copy');(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(function(){toast('ID copied')},function(){toast(v)})}});
+    openEl.querySelectorAll('.reveal').forEach(function(b){b.onclick=function(){var s=document.createElement('span');s.textContent=d.details[+b.dataset.i].value;b.replaceWith(s)}});
+    openEl.querySelectorAll('.doc-h').forEach(function(b){b.onclick=function(){var li=b.parentNode,o=li.classList.toggle('open');b.setAttribute('aria-expanded',o)}});
+  }
+
+  if(!/^[A-Z0-9]{6,16}$/.test(key)){ERR='nf';ready()} else load(1);
+</script>
+</body>
+</html>

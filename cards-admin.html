@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>QR Cards · Shubhodayah Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+/* Minimal QR encoder (byte mode, error level M, versions 1–10). Based on the standard ISO/IEC 18004 algorithm. */
+function qrcode(){
+  var ECC=[-1,10,16,26,18,24,16,18,22,22,26], BLK=[-1,1,1,1,2,2,4,4,4,5,5];
+  var data=[], size=0, mods=[], fn=[];
+  function bit(x,i){return ((x>>>i)&1)!==0}
+  function raw(v){var r=(16*v+128)*v+64;if(v>=2){var n=Math.floor(v/7)+2;r-=(25*n-10)*n-55;if(v>=7)r-=36}return r}
+  function dataCw(v){return Math.floor(raw(v)/8)-ECC[v]*BLK[v]}
+  function mul(x,y){var z=0;for(var i=7;i>=0;i--){z=(z<<1)^((z>>>7)*0x11D);z^=((y>>>i)&1)*x}return z&255}
+  function rsDiv(d){var r=[];for(var i=0;i<d;i++)r.push(0);r[d-1]=1;var root=1;for(i=0;i<d;i++){for(var j=0;j<r.length;j++){r[j]=mul(r[j],root);if(j+1<r.length)r[j]^=r[j+1]}root=mul(root,2)}return r}
+  function rsRem(dat,div){var r=div.map(function(){return 0});dat.forEach(function(b){var f=b^r.shift();r.push(0);div.forEach(function(c,i){r[i]^=mul(c,f)})});return r}
+  function set(x,y,d){mods[y][x]=d;fn[y][x]=true}
+  function finder(x,y){for(var dy=-4;dy<=4;dy++)for(var dx=-4;dx<=4;dx++){var d=Math.max(Math.abs(dx),Math.abs(dy)),xx=x+dx,yy=y+dy;if(xx>=0&&xx<size&&yy>=0&&yy<size)set(xx,yy,d!==2&&d!==4)}}
+  function align(x,y){for(var dy=-2;dy<=2;dy++)for(var dx=-2;dx<=2;dx++)set(x+dx,y+dy,Math.max(Math.abs(dx),Math.abs(dy))!==1)}
+  function alignPos(v){if(v===1)return[];var n=Math.floor(v/7)+2,step=Math.floor((v*8+n*3+5)/(n*4-4))*2,r=[6];for(var p=size-7;r.length<n;p-=step)r.splice(1,0,p);return r}
+  function format(mask){var d=(0<<3)|mask,r=d;for(var i=0;i<10;i++)r=(r<<1)^((r>>>9)*0x537);var b=((d<<10)|r)^0x5412;
+    for(i=0;i<=5;i++)set(8,i,bit(b,i));set(8,7,bit(b,6));set(8,8,bit(b,7));set(7,8,bit(b,8));for(i=9;i<15;i++)set(14-i,8,bit(b,i));
+    for(i=0;i<8;i++)set(size-1-i,8,bit(b,i));for(i=8;i<15;i++)set(8,size-15+i,bit(b,i));set(8,size-8,true)}
+  function version(v){if(v<7)return;var r=v;for(var i=0;i<12;i++)r=(r<<1)^((r>>>11)*0x1F25);var b=(v<<12)|r;for(i=0;i<18;i++){var a=size-11+i%3,c=Math.floor(i/3);set(a,c,bit(b,i));set(c,a,bit(b,i))}}
+  function maskOn(m,x,y){switch(m){case 0:return(x+y)%2===0;case 1:return y%2===0;case 2:return x%3===0;case 3:return(x+y)%3===0;
+    case 4:return(Math.floor(x/3)+Math.floor(y/2))%2===0;case 5:return x*y%2+x*y%3===0;case 6:return(x*y%2+x*y%3)%2===0;default:return((x+y)%2+x*y%3)%2===0}}
+  function applyMask(m){for(var y=0;y<size;y++)for(var x=0;x<size;x++)if(!fn[y][x]&&maskOn(m,x,y))mods[y][x]=!mods[y][x]}
+  function penalty(){var p=0,dark=0,x,y,run,c;
+    for(y=0;y<size;y++){run=1;for(x=1;x<=size;x++){if(x<size&&mods[y][x]===mods[y][x-1])run++;else{if(run>=5)p+=run-2;run=1}}}
+    for(x=0;x<size;x++){run=1;for(y=1;y<=size;y++){if(y<size&&mods[y][x]===mods[y-1][x])run++;else{if(run>=5)p+=run-2;run=1}}}
+    for(y=0;y<size-1;y++)for(x=0;x<size-1;x++){c=mods[y][x];if(c===mods[y][x+1]&&c===mods[y+1][x]&&c===mods[y+1][x+1])p+=3}
+    for(y=0;y<size;y++)for(x=0;x<size;x++)if(mods[y][x])dark++;
+    return p+Math.floor(Math.abs(dark*20-size*size*10)/(size*size))*10}
+  return {
+    addData:function(s){data=data.concat(Array.prototype.slice.call(new TextEncoder().encode(s)))},
+    make:function(){
+      var v,bits=[],push=function(val,n){for(var i=n-1;i>=0;i--)bits.push((val>>>i)&1)};
+      for(v=1;v<=10;v++){if(4+(v<10?8:16)+data.length*8<=dataCw(v)*8)break}
+      if(v>10)throw new Error('Text too long for QR');
+      push(4,4);push(data.length,v<10?8:16);data.forEach(function(b){push(b,8)});
+      var cap=dataCw(v)*8;push(0,Math.min(4,cap-bits.length));push(0,(8-bits.length%8)%8);
+      for(var pad=0xEC;bits.length<cap;pad^=0xEC^0x11)push(pad,8);
+      var cw=[];for(var i=0;i<bits.length;i+=8){var b=0;for(var j=0;j<8;j++)b=(b<<1)|bits[i+j];cw.push(b)}
+      var nb=BLK[v],el=ECC[v],rc=Math.floor(raw(v)/8),ns=nb-rc%nb,sl=Math.floor(rc/nb),div=rsDiv(el),blocks=[],k=0;
+      for(i=0;i<nb;i++){var d=cw.slice(k,k+sl-el+(i<ns?0:1));k+=d.length;var e=rsRem(d,div);if(i<ns)d.push(0);blocks.push(d.concat(e))}
+      var all=[];for(i=0;i<blocks[0].length;i++)for(j=0;j<blocks.length;j++)if(i!==sl-el||j>=ns)all.push(blocks[j][i]);
+      size=v*4+17;mods=[];fn=[];for(i=0;i<size;i++){mods.push(new Array(size).fill(false));fn.push(new Array(size).fill(false))}
+      for(i=0;i<size;i++){set(6,i,i%2===0);set(i,6,i%2===0)}
+      finder(3,3);finder(size-4,3);finder(3,size-4);
+      var ap=alignPos(v),na=ap.length;
+      for(i=0;i<na;i++)for(j=0;j<na;j++)if(!((i===0&&j===0)||(i===0&&j===na-1)||(i===na-1&&j===0)))align(ap[i],ap[j]);
+      format(0);version(v);
+      var n=0;for(var right=size-1;right>=1;right-=2){if(right===6)right=5;
+        for(var vert=0;vert<size;vert++)for(j=0;j<2;j++){var x=right-j,up=((right+1)&2)===0,y=up?size-1-vert:vert;
+          if(!fn[y][x]&&n<all.length*8){mods[y][x]=bit(all[n>>>3],7-(n&7));n++}}}
+      var best=0,bp=1e9;for(var m=0;m<8;m++){applyMask(m);format(m);var p=penalty();if(p<bp){bp=p;best=m}applyMask(m)}
+      applyMask(best);format(best);
+    },
+    getModuleCount:function(){return size},
+    isDark:function(r,c){return mods[r][c]}
+  };
+}
+</script>
+<style>
+  :root{--paper:#F6E8D7;--card:#FFFAF3;--ink:#3E2714;--muted:#8A6A4C;--copper:#B06A3B;--copper-dk:#8C4F27;
+    --line:#E6D2BA;--ok:#2F7A4B;--okbg:#E3F1E7;--warn:#9A6A12;--warnbg:#F7EBCF;--bad:#A23B2A;--badbg:#F6DFDA;--grey:#6F6A64;--greybg:#ECE7E1}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Lora',Georgia,serif;background:var(--paper);color:var(--ink);font-size:15px;min-height:100vh}
+  button,input,select,textarea{font:inherit;color:inherit}
+  .hdr{position:sticky;top:0;z-index:5;background:#3E2714;color:#F6E8D7;padding:12px 16px;display:flex;align-items:center;gap:12px}
+  .hdr b{font-family:'Cinzel',serif;letter-spacing:.14em;font-size:15px}
+  .hdr .sp{flex:1}
+  .hdr button{background:transparent;border:1px solid rgba(246,232,215,.4);color:#F6E8D7;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;
+    font-weight:600;font-size:14px;background:var(--copper);color:#FFF8EF;min-height:42px;text-decoration:none}
+  .btn:hover{background:var(--copper-dk)}
+  .btn.ghost{background:transparent;border:1.3px solid var(--copper);color:var(--copper-dk)}
+  .btn.ghost:hover{background:#F3E1CC}
+  .btn.small{padding:6px 10px;min-height:34px;font-size:13px}
+  .btn.danger{background:transparent;border:1.3px solid var(--bad);color:var(--bad)}
+  .btn[disabled]{opacity:.5;pointer-events:none}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .grow{flex:1;min-width:180px}
+  input[type=text],input[type=password],input[type=search],select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:9px;padding:10px 11px;min-height:42px}
+  textarea{min-height:64px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:2px solid #E0B48C;border-color:var(--copper)}
+  label.f{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px;letter-spacing:.02em}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
+  .stat.on{border-color:var(--copper);box-shadow:inset 0 0 0 1px var(--copper)}
+  .stat .n{font-family:'Cinzel',serif;font-size:22px}
+  .stat .l{font-size:12px;color:var(--muted)}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
+  .item:hover{border-color:#D5B08C}
+  .item .cid{font-family:'Cinzel',serif;font-size:13px;color:var(--copper-dk);letter-spacing:.06em}
+  .item .nm{font-weight:600}
+  .item .meta{font-size:12.5px;color:var(--muted)}
+  .chk{width:20px;height:20px;accent-color:var(--copper)}
+  .pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;text-transform:capitalize;white-space:nowrap}
+  .s-active{background:var(--okbg);color:var(--ok)} .s-dispatched{background:var(--warnbg);color:var(--warn)}
+  .s-disabled{background:var(--badbg);color:var(--bad)} .s-replaced{background:var(--greybg);color:var(--grey)}
+  .empty{text-align:center;color:var(--muted);padding:40px 10px}
+  .bar{position:sticky;bottom:0;margin-top:12px;background:#3E2714;color:#F6E8D7;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .bar .btn{background:#F6E8D7;color:#3E2714}
+  /* drawer */
+  .ov{position:fixed;inset:0;background:rgba(40,24,10,.45);z-index:10;display:none}
+  .ov.on{display:block}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--paper);z-index:11;overflow:auto;transform:translateX(105%);transition:transform .22s ease}
+  .drawer.on{transform:none}
+  .dh{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:2}
+  .dh h2{font-family:'Cinzel',serif;font-size:17px;flex:1}
+  .db{padding:16px;display:flex;flex-direction:column;gap:14px}
+  .sec h3{font-family:'Cinzel',serif;font-size:13px;letter-spacing:.12em;color:var(--copper-dk);margin-bottom:8px}
+  .doc{display:flex;flex-wrap:wrap;gap:10px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px;margin-bottom:8px}
+  .doc .t{flex:1 1 200px;min-width:0}
+  .doc .t b{display:block;font-size:14px;word-break:break-word}
+  .doc .t span{font-size:12px;color:var(--muted);word-break:break-all}
+  .doc .a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+  .drop{border:2px dashed #D5B08C;border-radius:12px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;background:#FFFBF5}
+  .drop.hot{background:#F3E1CC;border-color:var(--copper)}
+  .sticker-box{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .sticker-prev{background:repeating-conic-gradient(#EADBC8 0% 25%,#F3E6D6 0% 50%) 50%/14px 14px;border-radius:10px;padding:14px;display:flex;justify-content:center}
+  .sticker-prev svg{width:150px;height:auto;filter:drop-shadow(0 2px 6px rgba(60,30,10,.25))}
+  .link{font-size:12.5px;word-break:break-all;color:var(--copper-dk)}
+  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#3E2714;color:#F6E8D7;padding:10px 16px;border-radius:10px;z-index:30;font-size:14px;display:none;max-width:90vw}
+  .login{max-width:380px;margin:12vh auto 0}
+  .login h1{font-family:'Cinzel',serif;font-size:20px;text-align:center;letter-spacing:.1em;margin-bottom:4px}
+  .hint{font-size:12.5px;color:var(--muted)}
+  .modal{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(40,24,10,.45)}
+  .modal.on{display:flex}
+  .modal .panel{width:min(520px,100%);max-height:92vh;overflow:auto}
+  @media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.item{grid-template-columns:auto 1fr}.item .pill{grid-column:2}}
+
+  /* ===== print sheet ===== */
+  #print{display:none}
+  @media print{
+    @page{size:A4;margin:8mm}
+    body{background:#fff}
+    body>*:not(#print){display:none!important}
+    #print{display:flex;flex-wrap:wrap;gap:var(--gap,3mm);align-content:flex-start}
+    #print svg{display:block;break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login panel" hidden>
+  <img src="card-logo.jpg" alt="Shubhodayah" style="display:block;width:180px;margin:0 auto 10px;border-radius:10px;mix-blend-mode:multiply">
+  <h1>QR CARDS</h1>
+  <p class="hint" style="text-align:center;margin-bottom:12px">Shubhodayah admin</p>
+  <label class="f" for="key">Admin key</label>
+  <input id="key" type="password" autocomplete="current-password" placeholder="CARDS_ADMIN_KEY from Render">
+  <button class="btn" style="width:100%;margin-top:14px" id="loginBtn">Log in</button>
+  <p class="hint" id="loginErr" style="color:var(--bad);margin-top:10px"></p>
+</div>
+
+<div id="appView" hidden>
+  <div class="hdr"><img src="card-logo.jpg" alt="" style="width:38px;height:38px;object-fit:cover;border-radius:50%;object-position:50% 30%"><b>SHUBHODAYAH · QR CARDS</b><span class="sp"></span>
+    <button onclick="location.reload()">Refresh</button><button id="logout">Log out</button></div>
+  <main>
+    <div class="row">
+      <input id="q" type="search" class="grow" placeholder="Search name, card ID, city, phone, order…">
+      <button class="btn" id="newBtn">+ New card</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="list" id="list"></div>
+    <div class="bar" id="printBar" hidden>
+      <span id="selCount"></span><span style="flex:1"></span>
+      <button class="btn small" id="clearSel" style="background:transparent;color:#F6E8D7;border:1px solid rgba(246,232,215,.4)">Clear</button>
+      <button class="btn small" id="printSel">Print sticker sheet</button>
+    </div>
+  </main>
+</div>
+
+<!-- card drawer -->
+<div class="ov" id="ov"></div>
+<aside class="drawer" id="drawer" aria-label="Card details">
+  <div class="dh"><h2 id="dTitle"></h2><span id="dPill"></span><button class="btn ghost small" id="dClose">Close</button></div>
+  <div class="db" id="dBody"></div>
+</aside>
+
+<!-- new card modal -->
+<div class="modal" id="newModal">
+  <div class="panel">
+    <h3 style="font-family:Cinzel,serif;letter-spacing:.1em;margin-bottom:4px">NEW CARD</h3>
+    <p class="hint">Card ID and QR are created automatically.</p>
+    <label class="f">Customer name *</label><input id="n_name" type="text">
+    <div class="row"><div class="grow"><label class="f">City</label><input id="n_city" type="text"></div>
+      <div class="grow"><label class="f">Phone</label><input id="n_phone" type="text" inputmode="tel"></div></div>
+    <div class="row"><div class="grow"><label class="f">Card category</label><input id="n_cat" type="text" list="catList" placeholder="Mahasiddhi"></div>
+      <div class="grow"><label class="f">Personalised ID</label><input id="n_pid" type="text" placeholder="Leave blank to use SHB number"></div></div>
+    <label class="f">Order / query reference (optional)</label><input id="n_order" type="text">
+    <datalist id="catList"></datalist>
+    <label class="f">Text above QR</label><input id="n_caption" type="text">
+    <label class="f">Internal note (never shown to customer)</label><textarea id="n_note"></textarea>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">
+      <button class="btn ghost" onclick="closeModal('newModal')">Cancel</button>
+      <button class="btn" id="createBtn">Create card</button>
+    </div>
+  </div>
+</div>
+
+<!-- print modal -->
+<div class="modal" id="printModal">
+  <div class="panel">
+    <h3 style="font-family:Cinzel,serif;letter-spacing:.1em;margin-bottom:8px">PRINT STICKER SHEET</h3>
+    <p class="hint">A4 page. In the print dialog choose <b>Scale: 100% / Actual size</b> (not "Fit to page"), margins Default.</p>
+    <label class="f">QR size</label>
+    <select id="p_size"><option value="22">22 mm (smallest)</option><option value="25" selected>25 mm (recommended)</option><option value="30">30 mm (easiest to scan)</option></select>
+    <label class="f">Copies of each sticker</label>
+    <select id="p_copies"><option>1</option><option>2</option><option>3</option></select>
+    <label class="f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="p_cut" class="chk" checked> Show light cut lines</label>
+    <p class="hint" id="p_info" style="margin-top:8px"></p>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">
+      <button class="btn ghost" onclick="closeModal('printModal')">Cancel</button>
+      <button class="btn" id="doPrint">Print</button>
+    </div>
+  </div>
+</div>
+
+<div id="print"></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="filePick" accept="application/pdf,.pdf" multiple hidden>
+<input type="file" id="replacePick" accept="application/pdf,.pdf" hidden>
+
+<script>
+/* ======= SET THESE ======= */
+var API_BASE = 'https://shubhodayah-backend.onrender.com';   // your Render backend (no trailing slash)
+var PUBLIC_BASE = 'https://shubhodayah.com/card.html?k=';            // what the QR opens — never change once cards are printed
+var DEFAULT_CAPTION = 'Scan to unveil your Vastu blessings';
+var BASE_CATEGORIES = ['Mahasiddhi', 'Vishisht'];
+/* ========================= */
+
+var KEY = sessionStorage.getItem('cardsKey') || '';
+var CARDS = [], FILTER = 'all', OPEN = null, SEL = {}, REPLACE_DOC = null;
+var $ = function(id){return document.getElementById(id)};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function toast(m){var t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){t.style.display='none'},2600)}
+function size(b){if(!b)return'';return b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB'}
+function date(d){return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
+function openModal(id){$(id).classList.add('on')} function closeModal(id){$(id).classList.remove('on')}
+function urlFor(c){return PUBLIC_BASE + c.qr_key}
+
+function api(path, opts){
+  opts = opts || {};
+  var headers = {'x-admin-key': KEY};
+  if (opts.json !== undefined){headers['Content-Type']='application/json'; opts.body=JSON.stringify(opts.json)}
+  return fetch(API_BASE + '/api/cards/admin' + path, {method:opts.method||'GET', headers:headers, body:opts.body})
+    .then(function(r){return r.json().catch(function(){return {}}).then(function(j){
+      if(r.status===401){logout();throw new Error('Please log in again')}
+      if(!r.ok) throw new Error(j.error||('Error '+r.status)); return j;})});
+}
+
+/* ---------- login ---------- */
+function logout(){sessionStorage.removeItem('cardsKey');KEY='';$('appView').hidden=true;$('loginView').hidden=false}
+$('logout').onclick=logout;
+$('loginBtn').onclick=function(){
+  KEY=$('key').value.trim(); if(!KEY) return;
+  $('loginBtn').textContent='Checking… (server may take a minute to wake)'; $('loginErr').textContent='';
+  api('/cards').then(function(c){sessionStorage.setItem('cardsKey',KEY);CARDS=c;showApp()})
+    .catch(function(e){$('loginErr').textContent=e.message==='Failed to fetch'?'Cannot reach the backend. Check API_BASE.':'Wrong key.';})
+    .finally(function(){$('loginBtn').textContent='Log in'});
+};
+$('key').onkeydown=function(e){if(e.key==='Enter')$('loginBtn').click()};
+function showApp(){$('loginView').hidden=true;$('appView').hidden=false;renderList()}
+function reload(){return api('/cards').then(function(c){CARDS=c;renderList();if(OPEN)renderDrawer()})}
+
+/* ---------- list ---------- */
+$('q').oninput=renderList;
+function renderList(){
+  var counts={all:CARDS.length,active:0,dispatched:0,inactive:0};
+  CARDS.forEach(function(c){if(c.status==='active')counts.active++;else if(c.status==='dispatched')counts.dispatched++;else counts.inactive++;});
+  var labels={all:'All cards',active:'Active (to dispatch)',dispatched:'Dispatched',inactive:'Disabled / replaced'};
+  $('stats').innerHTML=Object.keys(labels).map(function(k){return '<div class="stat'+(FILTER===k?' on':'')+'" data-f="'+k+'"><div class="n">'+counts[k]+'</div><div class="l">'+labels[k]+'</div></div>'}).join('');
+  Array.prototype.forEach.call($('stats').children,function(el){el.onclick=function(){FILTER=el.dataset.f;renderList()}});
+  var q=$('q').value.trim().toLowerCase();
+  var rows=CARDS.filter(function(c){
+    if(FILTER==='active'&&c.status!=='active')return false;
+    if(FILTER==='dispatched'&&c.status!=='dispatched')return false;
+    if(FILTER==='inactive'&&!(c.status==='disabled'||c.status==='replaced'))return false;
+    if(!q)return true;
+    return [c.card_code,c.personal_id,c.category,c.customer_name,c.city,c.phone,c.order_ref].join(' ').toLowerCase().indexOf(q)>-1;
+  });
+  $('list').innerHTML=rows.length?rows.map(function(c){
+    var live=c.status==='active'||c.status==='dispatched';
+    return '<div class="item" data-id="'+c.id+'">'
+      +(live?'<input type="checkbox" class="chk" data-sel="'+c.id+'"'+(SEL[c.id]?' checked':'')+' title="Add to sticker sheet">':'<span style="width:20px"></span>')
+      +'<div><div class="cid">'+esc(c.personal_id?c.personal_id+' · '+c.card_code:c.card_code)+'</div><div class="nm">'+esc(c.customer_name)+'</div>'
+      +'<div class="meta">'+esc([c.city,c.docs.length+' PDF'+(c.docs.length===1?'':'s'),date(c.created_at),c.scan_count?c.scan_count+' scans':''].filter(Boolean).join(' · '))+'</div></div>'
+      +'<span class="pill s-'+c.status+'">'+c.status+'</span></div>';
+  }).join(''):'<div class="empty">'+(CARDS.length?'No cards match.':'No cards yet. Tap <b>+ New card</b> to create the first one.')+'</div>';
+  Array.prototype.forEach.call(document.querySelectorAll('.item'),function(el){
+    el.onclick=function(e){if(e.target.dataset.sel)return;openCard(el.dataset.id)}});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-sel]'),function(cb){
+    cb.onchange=function(){if(cb.checked)SEL[cb.dataset.sel]=1;else delete SEL[cb.dataset.sel];updateBar()}});
+  updateBar();
+}
+function updateBar(){var n=Object.keys(SEL).length;$('printBar').hidden=!n;$('selCount').textContent=n+' sticker'+(n===1?'':'s')+' selected'}
+$('clearSel').onclick=function(){SEL={};renderList()};
+
+/* ---------- new card ---------- */
+$('newBtn').onclick=function(){fillCats();['n_name','n_city','n_phone','n_order','n_note','n_cat','n_pid'].forEach(function(i){$(i).value=''});$('n_caption').value=DEFAULT_CAPTION;openModal('newModal');$('n_name').focus()};
+$('createBtn').onclick=function(){
+  var b={customer_name:$('n_name').value,city:$('n_city').value,phone:$('n_phone').value,order_ref:$('n_order').value,note:$('n_note').value,category:$('n_cat').value,personal_id:$('n_pid').value,caption:$('n_caption').value||DEFAULT_CAPTION};
+  if(!b.customer_name.trim())return toast('Customer name is required');
+  $('createBtn').disabled=true;
+  api('/cards',{method:'POST',json:b}).then(function(c){CARDS.unshift(c);closeModal('newModal');renderList();openCard(c.id);toast(c.card_code+' created — now upload the PDF')})
+    .catch(function(e){toast(e.message)}).finally(function(){$('createBtn').disabled=false});
+};
+
+/* ---------- drawer ---------- */
+function card(){return CARDS.filter(function(c){return c.id===OPEN})[0]}
+function openCard(id){OPEN=id;renderDrawer();$('ov').classList.add('on');$('drawer').classList.add('on')}
+function closeDrawer(){OPEN=null;$('ov').classList.remove('on');$('drawer').classList.remove('on')}
+$('ov').onclick=closeDrawer;$('dClose').onclick=closeDrawer;
+function upd(c){CARDS=CARDS.map(function(x){return x.id===c.id?c:x});renderList();renderDrawer()}
+
+function renderDrawer(){
+  var c=card(); if(!c)return closeDrawer();
+  var live=c.status==='active'||c.status==='dispatched';
+  $('dTitle').textContent=c.card_code; $('dPill').innerHTML='<span class="pill s-'+c.status+'">'+c.status+'</span>';
+  var h='';
+  if(c.status==='replaced'){var nw=CARDS.filter(function(x){return x.id===c.replaced_by})[0];
+    h+='<div class="panel" style="background:var(--greybg)">This card was replaced'+(nw?' by <a href="#" onclick="openCard(\''+nw.id+'\');return false">'+esc(nw.card_code)+'</a>':'')+'. Its QR now shows "no longer active".</div>';}
+  // details
+  h+='<div class="sec panel"><h3>CUSTOMER</h3>'
+    +'<label class="f">Name</label><input type="text" id="e_name" value="'+esc(c.customer_name)+'">'
+    +'<div class="row"><div class="grow"><label class="f">City</label><input type="text" id="e_city" value="'+esc(c.city)+'"></div>'
+    +'<div class="grow"><label class="f">Phone</label><input type="text" id="e_phone" value="'+esc(c.phone)+'"></div></div>'
+    +'<div class="row"><div class="grow"><label class="f">Card category</label><input type="text" id="e_cat" list="catList" value="'+esc(c.category)+'"></div>'
+    +'<div class="grow"><label class="f">Personalised ID</label><input type="text" id="e_pid" placeholder="'+esc(c.card_code)+'" value="'+esc(c.personal_id)+'"></div></div>'
+    +'<label class="f">Order / query reference</label><input type="text" id="e_order" value="'+esc(c.order_ref)+'">'
+    +'<label class="f">Internal note</label><textarea id="e_note">'+esc(c.note)+'</textarea>'
+    +'<div class="row" style="margin-top:10px;justify-content:space-between"><span class="hint">Created '+date(c.created_at)+(c.scan_count?' · scanned '+c.scan_count+'×, last '+date(c.last_scan_at):' · not scanned yet')+'</span>'
+    +'</div></div>';
+  h+='<div class="sec panel"><h3>DETAILS SHOWN TO CUSTOMER</h3><p class="hint" style="margin-bottom:8px">Name, city, category and personalised ID always show. For each line below choose Show, Tap to show (hidden until tapped) or Hide.</p>'
+    +'<div id="detRows"></div><button class="btn ghost small" id="addDet" style="margin-top:4px">+ Add detail</button>'
+    +'<div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" id="saveDet">Save all details</button></div></div>';
+  // docs
+  h+='<div class="sec panel"><h3>DOCUMENTS ('+c.docs.length+')</h3>';
+  c.docs.forEach(function(d,i){
+    h+='<div class="doc"><div class="t"><b>'+esc(d.label)+'</b><span>'+esc(d.file_name)+' · '+size(d.size_bytes)+'</span></div><div class="a">'
+     +'<button class="btn ghost small" data-act="view" data-d="'+d.id+'">View</button>'
+     +'<button class="btn ghost small" data-act="rename" data-d="'+d.id+'">Rename</button>'
+     +'<button class="btn ghost small" data-act="replace" data-d="'+d.id+'">Replace</button>'
+     +(i>0?'<button class="btn ghost small" data-act="up" data-d="'+d.id+'" title="Move up">↑</button>':'')
+     +'<button class="btn danger small" data-act="del" data-d="'+d.id+'">Delete</button></div></div>';
+  });
+  if(c.status!=='replaced') h+='<div class="drop" id="drop"><b>Upload PDF</b><br><span class="hint">Tap to choose, or drag PDFs here (max 25 MB each)</span></div><p class="hint" id="upMsg" style="margin-top:6px"></p>';
+  h+='<p class="hint" style="margin-top:8px">Replacing a PDF keeps the same QR — the customer just sees the new file.</p></div>';
+  // sticker
+  if(live){
+    h+='<div class="sec panel"><h3>QR STICKER</h3><div class="sticker-box"><div class="sticker-prev" id="stPrev"></div><div class="grow">'
+      +'<label class="f" style="margin-top:0">Text above QR</label><input type="text" id="e_caption" value="'+esc(c.caption||DEFAULT_CAPTION)+'">'
+      +'<div class="row" style="margin-top:8px"><button class="btn ghost small" id="saveCap">Save text</button>'
+      +'<button class="btn ghost small" id="resetCap">Default</button></div>'
+      +'<div class="row" style="margin-top:12px"><button class="btn small" id="dlPng">Download PNG</button><button class="btn small" id="dlSvg">Download SVG</button>'
+      +'<button class="btn ghost small" id="addSheet">'+(SEL[c.id]?'✓ On print sheet':'Add to print sheet')+'</button></div>'
+      +'<p class="hint" style="margin-top:10px">QR opens:</p><div class="link">'+esc(urlFor(c))+'</div>'
+      +'<div class="row" style="margin-top:6px"><button class="btn ghost small" id="copyLink">Copy link</button><a class="btn ghost small" href="'+esc(urlFor(c))+'" target="_blank" rel="noopener">Open page</a></div>'
+      +'</div></div></div>';
+  }
+  // status
+  h+='<div class="sec panel"><h3>CARD STATUS</h3><div class="row">';
+  if(c.status==='active') h+='<button class="btn" data-st="dispatched">Mark dispatched</button>';
+  if(c.status==='dispatched') h+='<button class="btn ghost" data-st="active">Back to active</button>';
+  if(live) h+='<button class="btn danger" data-st="disabled">Disable card</button><button class="btn ghost" id="reissue">Lost card → issue new QR</button>';
+  if(c.status==='disabled') h+='<button class="btn" data-st="active">Re-activate</button>';
+  h+='</div><p class="hint" style="margin-top:8px">Disabled cards show "This card is no longer active" when scanned.</p>'
+    +'<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px"><button class="btn danger small" id="delCard">Delete card permanently</button></div></div>';
+  $('dBody').innerHTML=h;
+
+  // wire up
+  fillCats(); renderDetRows(c.details||[]);
+  $('addDet').onclick=function(){var l=readDetRows();l.push({label:'',value:'',show:'show'});renderDetRows(l);var ins=$('detRows').querySelectorAll('.dl');ins[ins.length-1].focus()};
+  $('saveDet').onclick=function(){
+    if(!$('e_name').value.trim())return toast('Customer name is required');
+    api('/cards/'+c.id,{method:'PATCH',json:{customer_name:$('e_name').value,city:$('e_city').value,phone:$('e_phone').value,order_ref:$('e_order').value,note:$('e_note').value,
+      category:$('e_cat').value,personal_id:$('e_pid').value,details:readDetRows()}}).then(function(x){upd(x);toast('Details saved')}).catch(function(e){toast(e.message)})};
+  Array.prototype.forEach.call($('dBody').querySelectorAll('[data-act]'),function(b){b.onclick=function(){docAction(c,b.dataset.act,b.dataset.d)}});
+  Array.prototype.forEach.call($('dBody').querySelectorAll('[data-st]'),function(b){b.onclick=function(){
+    var st=b.dataset.st; if(st==='disabled'&&!confirm('Disable '+c.card_code+'? Scanning it will show "no longer active".'))return;
+    api('/cards/'+c.id,{method:'PATCH',json:{status:st}}).then(function(x){upd(x);toast(c.card_code+' → '+st)}).catch(function(e){toast(e.message)})}});
+  var re=$('reissue'); if(re) re.onclick=function(){
+    if(!confirm('Issue a NEW card with a new QR for '+c.customer_name+'?\n\nThe old QR ('+c.card_code+') will stop working. Documents are copied over.'))return;
+    re.disabled=true; api('/cards/'+c.id+'/reissue',{method:'POST'}).then(function(n){delete SEL[c.id];return reload().then(function(){openCard(n.id);toast('New card '+n.card_code+' created')})}).catch(function(e){toast(e.message);re.disabled=false})};
+  $('delCard').onclick=function(){
+    if(prompt('This deletes the card and all its PDFs forever. Type '+c.card_code+' to confirm.')!==c.card_code)return;
+    api('/cards/'+c.id,{method:'DELETE'}).then(function(){delete SEL[c.id];closeDrawer();reload();toast('Deleted')}).catch(function(e){toast(e.message)})};
+  var drop=$('drop'); if(drop){
+    drop.onclick=function(){$('filePick').value='';$('filePick').click()};
+    drop.ondragover=function(e){e.preventDefault();drop.classList.add('hot')};
+    drop.ondragleave=function(){drop.classList.remove('hot')};
+    drop.ondrop=function(e){e.preventDefault();drop.classList.remove('hot');uploadFiles(c,e.dataTransfer.files)};
+  }
+  if(live){
+    var draw=function(){$('stPrev').innerHTML=stickerSVG(c,{caption:$('e_caption').value,qrMM:25,id:$('e_pid').value.trim()})};
+    draw(); $('e_caption').oninput=draw; $('e_pid').addEventListener('input',draw);
+    $('saveCap').onclick=function(){api('/cards/'+c.id,{method:'PATCH',json:{caption:$('e_caption').value}}).then(function(x){upd(x);toast('Sticker text saved')}).catch(function(e){toast(e.message)})};
+    $('resetCap').onclick=function(){$('e_caption').value=DEFAULT_CAPTION;draw()};
+    $('dlSvg').onclick=function(){download(new Blob([stickerSVG(c,{caption:$('e_caption').value,qrMM:25,id:$('e_pid').value.trim()})],{type:'image/svg+xml'}),c.card_code+'_QR.svg')};
+    $('dlPng').onclick=function(){stickerPNG(c,$('e_caption').value,$('e_pid').value.trim())};
+    $('addSheet').onclick=function(){if(SEL[c.id])delete SEL[c.id];else SEL[c.id]=1;renderList();renderDrawer()};
+    $('copyLink').onclick=function(){navigator.clipboard.writeText(urlFor(c)).then(function(){toast('Link copied')})};
+  }
+}
+$('filePick').onchange=function(){var c=card();if(c)uploadFiles(c,$('filePick').files)};
+
+function uploadFiles(c,files){
+  files=Array.prototype.slice.call(files||[]).filter(function(f){return /pdf$/i.test(f.type)||/\.pdf$/i.test(f.name)});
+  if(!files.length)return toast('Please choose PDF files');
+  var i=0, msg=function(t){var el=$('upMsg');if(el)el.textContent=t};
+  (function next(){
+    if(i>=files.length){msg('');return toast('Upload complete')}
+    var f=files[i++]; msg('Uploading '+f.name+' ('+i+'/'+files.length+')…');
+    var fd=new FormData(); fd.append('file',f); fd.append('label',f.name.replace(/\.pdf$/i,'').replace(/[_]+/g,' '));
+    api('/cards/'+c.id+'/docs',{method:'POST',body:fd}).then(function(x){upd(x);next()}).catch(function(e){toast(f.name+': '+e.message);next()});
+  })();
+}
+function docAction(c,act,docId){
+  var d=c.docs.filter(function(x){return x.id===docId})[0]; if(!d)return;
+  if(act==='view'){var w=window.open('about:blank');api('/cards/'+c.id+'/docs/'+d.id+'/link').then(function(r){w.location=r.url}).catch(function(e){w.close();toast(e.message)})}
+  if(act==='rename'){var n=prompt('Name shown to the customer:',d.label);if(n&&n.trim())api('/cards/'+c.id+'/docs/'+d.id,{method:'PATCH',json:{label:n}}).then(upd).catch(function(e){toast(e.message)})}
+  if(act==='replace'){REPLACE_DOC=d.id;$('replacePick').value='';$('replacePick').click()}
+  if(act==='del'&&confirm('Delete "'+d.label+'"?'))api('/cards/'+c.id+'/docs/'+d.id,{method:'DELETE'}).then(function(x){upd(x);toast('Deleted')}).catch(function(e){toast(e.message)});
+  if(act==='up'){var idx=c.docs.indexOf(d),prev=c.docs[idx-1];
+    Promise.all(c.docs.map(function(x,i){var o=i===idx?idx-1:i===idx-1?idx:i;return api('/cards/'+c.id+'/docs/'+x.id,{method:'PATCH',json:{sort_order:o}})}))
+      .then(reload).catch(function(e){toast(e.message)})}
+}
+$('replacePick').onchange=function(){
+  var c=card(),f=$('replacePick').files[0]; if(!c||!f||!REPLACE_DOC)return;
+  var fd=new FormData();fd.append('file',f);toast('Replacing…');
+  api('/cards/'+c.id+'/docs/'+REPLACE_DOC+'/replace',{method:'POST',body:fd}).then(function(x){upd(x);toast('Replaced — same QR, new file')}).catch(function(e){toast(e.message)});
+};
+
+/* ---------- sticker drawing (all sizes in mm) ---------- */
+var measureCtx=document.createElement('canvas').getContext('2d');
+function wrap(text,maxW,fontMM){
+  measureCtx.font='600 '+(fontMM*10)+'px Georgia, serif';
+  var words=String(text||'').trim().split(/\s+/),lines=[],cur='';
+  words.forEach(function(w){var t=cur?cur+' '+w:w;if(measureCtx.measureText(t).width/10>maxW&&cur){lines.push(cur);cur=w}else cur=t});
+  if(cur)lines.push(cur); return lines.slice(0,3);
+}
+function stickerGeom(qrMM,caption){
+  var pad=3, w=qrMM+pad*2, font=Math.max(1.9,qrMM*0.085), lh=font*1.25;
+  var lines=caption?wrap(caption,w-pad*1.2,font):[];
+  var capH=lines.length?lines.length*lh+1.2:0;
+  var h=pad*0.8+capH+qrMM+1.2+3.4+pad*0.6;
+  return {w:w,h:h,pad:pad,font:font,lh:lh,lines:lines,capH:capH};
+}
+function stickerSVG(c,o){
+  var g=stickerGeom(o.qrMM,o.caption), q=qrcode(0,'M'); q.addData(urlFor(c)); q.make();
+  var n=q.getModuleCount(), m=o.qrMM/n, path='';
+  for(var r=0;r<n;r++)for(var col=0;col<n;col++)if(q.isDark(r,col))path+='M'+(col*m).toFixed(3)+' '+(r*m).toFixed(3)+'h'+m.toFixed(3)+'v'+m.toFixed(3)+'h-'+m.toFixed(3)+'z';
+  var y0=g.pad*0.8, s='';
+  s+='<svg xmlns="http://www.w3.org/2000/svg" width="'+g.w.toFixed(2)+'mm" height="'+g.h.toFixed(2)+'mm" viewBox="0 0 '+g.w.toFixed(2)+' '+g.h.toFixed(2)+'">';
+  s+='<rect width="100%" height="100%" fill="#fff"'+(o.cut?' stroke="#c8c8c8" stroke-width="0.15" stroke-dasharray="0.8 0.6"':'')+'/>';
+  g.lines.forEach(function(l,i){s+='<text x="'+(g.w/2).toFixed(2)+'" y="'+(y0+g.font+i*g.lh).toFixed(2)+'" text-anchor="middle" font-family="Georgia, \'Times New Roman\', serif" font-weight="600" font-size="'+g.font.toFixed(2)+'" fill="#000">'+esc(l)+'</text>'});
+  var qy=y0+g.capH;
+  s+='<path transform="translate('+g.pad+' '+qy.toFixed(3)+')" d="'+path+'" fill="#000" shape-rendering="crispEdges"/>';
+  s+='<text x="'+(g.w/2).toFixed(2)+'" y="'+(qy+o.qrMM+1.2+2.3).toFixed(2)+'" text-anchor="middle" font-family="Georgia, serif" font-size="2.3" letter-spacing="0.25" fill="#000">'+esc(o.id||c.personal_id||c.card_code)+'</text>';
+  return s+'</svg>';
+}
+function download(blob,name){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)}
+function stickerPNG(c,caption,id){
+  var svg=stickerSVG(c,{caption:caption,qrMM:25,id:id}), g=stickerGeom(25,caption), dpi=600, px=dpi/25.4;
+  var img=new Image(), cv=document.createElement('canvas'); cv.width=Math.round(g.w*px); cv.height=Math.round(g.h*px);
+  img.onload=function(){var x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.imageSmoothingEnabled=false;x.drawImage(img,0,0,cv.width,cv.height);
+    cv.toBlob(function(b){download(b,c.card_code+'_QR_600dpi.png')},'image/png')};
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+
+/* ---------- print sheet ---------- */
+function selectedCards(){return CARDS.filter(function(c){return SEL[c.id]})}
+function printInfo(){
+  var qr=+$('p_size').value, g=stickerGeom(qr,DEFAULT_CAPTION), cols=Math.floor((194+3)/(g.w+3)), rows=Math.floor((281+3)/(g.h+3));
+  var total=selectedCards().length*(+$('p_copies').value);
+  $('p_info').textContent='Each sticker ≈ '+g.w.toFixed(0)+' × '+g.h.toFixed(0)+' mm · about '+(cols*rows)+' per A4 page · '+total+' sticker'+(total===1?'':'s')+' to print.';
+}
+$('printSel').onclick=function(){printInfo();openModal('printModal')};
+$('p_size').onchange=printInfo;$('p_copies').onchange=printInfo;
+$('doPrint').onclick=function(){
+  var qr=+$('p_size').value,copies=+$('p_copies').value,cut=$('p_cut').checked,h='';
+  selectedCards().forEach(function(c){for(var i=0;i<copies;i++)h+=stickerSVG(c,{caption:c.caption||DEFAULT_CAPTION,qrMM:qr,cut:cut})});
+  $('print').innerHTML=h; closeModal('printModal'); setTimeout(function(){window.print()},150);
+};
+
+/* ---------- details editor ---------- */
+function fillCats(){var set={};BASE_CATEGORIES.concat(CARDS.map(function(c){return c.category})).forEach(function(x){if(x)set[x]=1});
+  $('catList').innerHTML=Object.keys(set).map(function(x){return '<option value="'+esc(x)+'">'}).join('')}
+function renderDetRows(list){
+  $('detRows').innerHTML=list.map(function(d,i){
+    return '<div class="det" style="border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px;margin-bottom:8px">'
+      +'<div class="row"><input type="text" class="dl grow" placeholder="Label (e.g. Mala jap)" value="'+esc(d.label)+'" style="min-width:120px">'
+      +'<select class="ds" style="width:auto;flex:none"><option value="show"'+(d.show==='show'?' selected':'')+'>Show</option><option value="tap"'+(d.show==='tap'?' selected':'')+'>Tap to show</option><option value="hide"'+(d.show==='hide'?' selected':'')+'>Hide</option></select>'
+      +'<button class="btn danger small dx" title="Remove" aria-label="Remove detail">✕</button></div>'
+      +'<input type="text" class="dv" placeholder="Value (e.g. 11 malas)" value="'+esc(d.value)+'" style="margin-top:6px"></div>';
+  }).join('')||'<p class="hint">No extra details yet.</p>';
+  Array.prototype.forEach.call($('detRows').querySelectorAll('.dx'),function(b,i){b.onclick=function(){var l=readDetRows();l.splice(i,1);renderDetRows(l)}});
+}
+function readDetRows(){return Array.prototype.map.call($('detRows').querySelectorAll('.det'),function(r){
+  return {label:r.querySelector('.dl').value.trim(),value:r.querySelector('.dv').value.trim(),show:r.querySelector('.ds').value}})}
+
+/* ---------- start ---------- */
+if(KEY){api('/cards').then(function(c){CARDS=c;showApp()}).catch(function(){logout()})} else logout();
+</script>
+</body>
+</html>
