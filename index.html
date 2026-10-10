@@ -2910,6 +2910,19 @@ function cpVerifyOtp(){
       msg.style.color='#27AE60';
       msg.textContent=T('Email verified.','ईमेल सत्यापित हो गया।');
       document.getElementById('cpSubmitBtn').disabled=false;
+      // Verified: remove the code boxes so nobody keeps tapping "Verify",
+      // lock the email, and complete the registration automatically.
+      const cpOtpRowEl=document.getElementById('cpOtpRow'); if(cpOtpRowEl) cpOtpRowEl.style.display='none';
+      const cpSendEl=document.getElementById('cpSendOtpBtn'); if(cpSendEl) cpSendEl.style.display='none';
+      document.getElementById('cpEmail').readOnly=true;
+      const cpAutoName=document.getElementById('cpName').value.trim();
+      if(cpAutoName){
+        msg.textContent=T('✓ Email verified — registering you as a Channel Partner…','✓ ईमेल सत्यापित — आपको चैनल पार्टनर के रूप में पंजीकृत किया जा रहा है…');
+        setTimeout(cpSubmitRegistration, 0);
+      } else {
+        msg.style.color='';
+        msg.textContent=T('✓ Email verified. Please enter your name above, then tap "Register as Channel Partner".','✓ ईमेल सत्यापित। कृपया ऊपर अपना नाम लिखें, फिर "Register as Channel Partner" दबाएं।');
+      }
 
       // Verifying an email here is exactly as strong a proof of
       // ownership as the main "Sign In" OTP flow — so treat it the
