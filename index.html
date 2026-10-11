@@ -1383,7 +1383,7 @@
       <h2 style="font-size:1.6rem;">Tell Us Your Concern — We'll Guide You</h2>
       <p style="margin:0 auto;">Not sure which service is right for you? Describe your problem in your own words and our team will contact you personally.</p>
       <div class="q-cta">
-        <button class="btn" onclick="openQueryForm()">Submit a Query</button>
+        <button class="btn" onclick="openQueryChoice()">Submit a Query</button>
         <button class="btn btn-outline" onclick="openMyQueries()">My Queries</button>
       </div>
     </div>
@@ -3107,7 +3107,7 @@ function finishSignIn(name, email, token){
     }
     if(typeof qPendingAfterSignIn!=='undefined' && qPendingAfterSignIn){
       var qWhat=qPendingAfterSignIn; qPendingAfterSignIn=null;
-      setTimeout(function(){ if(qWhat==='mine') openMyQueries(); else openQueryForm(); }, 200);
+      setTimeout(function(){ if(qWhat==='mine') openMyQueries(); else if(qWhat==='refer') openReferCustomer(); else openQueryForm(); }, 200);
       return;
     }
     if(pendingCeiLpiCheckout){
@@ -6190,6 +6190,44 @@ function qSignInFirst(what){
     note.textContent = what==='mine' ? T('Please sign in to see your queries.','अपने प्रश्न देखने के लिए कृपया साइन इन करें।') : T('Please sign in first — your query form will open right after.','कृपया पहले साइन इन करें — उसके बाद आपका प्रश्न फ़ॉर्म अपने आप खुल जाएगा।');
     note.style.display='block';
   }
+}
+/* Home "Submit a Query": first ask whether it is for yourself or for a customer you refer. */
+function openQueryChoice(){
+  document.getElementById('queryModalBody').innerHTML=
+    '<h2>'+T('Submit a Query','प्रश्न भेजें')+'</h2>'+
+    '<p class="sub">'+T('Who is this query for?','यह प्रश्न किसके लिए है?')+'</p>'+
+    '<div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">'+
+      '<button class="btn" onclick="openQueryForm()">'+T('For Myself','अपने लिए')+'</button>'+
+      '<button class="btn btn-outline" onclick="openReferCustomer()">'+T('Refer a Customer','ग्राहक को रेफर करें')+'</button>'+
+    '</div>'+
+    '<p class="note" style="margin-top:12px;">'+T('"Refer a Customer" is for Channel Partners — submit a query on behalf of someone you know.','"ग्राहक को रेफर करें" चैनल पार्टनर्स के लिए है — किसी परिचित की ओर से प्रश्न भेजें।')+'</p>';
+  openModal('queryModal');
+}
+/* Opens My Profile → Refer a Customer → Submit New (Channel Partners only). */
+function openReferCustomer(){
+  if(!isSignedIn){ closeModal('queryModal'); qSignInFirst('refer'); return; }
+  var go=function(){
+    closeModal('queryModal');
+    openProfile();
+    var btn=document.getElementById('referLeadTabBtn'); if(btn) btn.style.display='';
+    selectProfileTab('referlead');
+    selectReferLeadSubTab('submit');
+  };
+  var notPartner=function(){
+    document.getElementById('queryModalBody').innerHTML=
+      '<h2>'+T('Refer a Customer','ग्राहक को रेफर करें')+'</h2>'+
+      '<p>'+T('Referring customers is available to approved Channel Partners. Become a Channel Partner to refer customers and earn on every order.','ग्राहकों को रेफर करना स्वीकृत चैनल पार्टनर्स के लिए उपलब्ध है। चैनल पार्टनर बनें और हर ऑर्डर पर कमाएँ।')+'</p>'+
+      '<div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">'+
+        '<button class="btn" onclick="closeModal(\'queryModal\');goPage(\'partner\');">'+T('Become a Channel Partner','चैनल पार्टनर बनें')+'</button>'+
+        '<button class="btn btn-outline" onclick="openQueryForm()">'+T('Submit a Query for Myself','अपने लिए प्रश्न भेजें')+'</button>'+
+      '</div>';
+    openModal('queryModal');
+  };
+  if(myPartnerId){ go(); return; }
+  fetch(OTP_BACKEND_URL+'/api/channel-partner/dashboard?email='+encodeURIComponent(currentUserEmail))
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d && d.isPartner){ myPartnerId=d.partnerId||myPartnerId; loadChannelPartnerStatus(); go(); } else notPartner(); })
+    .catch(function(){ notPartner(); });
 }
 function openQueryForm(){
   if(!isSignedIn){ qSignInFirst('form'); return; }
