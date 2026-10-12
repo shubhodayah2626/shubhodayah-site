@@ -2790,11 +2790,28 @@ function restoreSession(){
     }
   }catch(e){ /* corrupted value — ignore, just stays signed out */ }
 }
+/* One-tap sign-in link from Shubhodayah (for Channel Partners added by the
+   admin): shubhodayah.com/?signin=TOKEN signs the person in automatically
+   and opens their Channel Partner page — no code, nothing to type. */
+function handleSignInLink(){
+  var m=/[?&]signin=([^&#]+)/.exec(location.search); if(!m) return;
+  var token=decodeURIComponent(m[1]);
+  try{ history.replaceState(null,'',location.pathname+location.hash); }catch(e){}
+  fetch(OTP_BACKEND_URL+'/api/channel-partner/login-link?t='+encodeURIComponent(token))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.ok){ alert(d && d.error ? d.error : T('This sign-in link is not valid. Please ask Shubhodayah for a new one.','यह साइन-इन लिंक मान्य नहीं है। कृपया शुभोदय से नया लिंक माँगें।')); return; }
+      finishSignIn(d.name, d.email, token);
+      if(d.isPartner) setTimeout(function(){ try{ openProfile(); var b=document.getElementById('partnerTabBtn'); if(b) b.style.display=''; selectProfileTab('partner'); }catch(e){} }, 1500);
+    })
+    .catch(function(){ alert(T('Could not sign in right now. Please try the link again in a minute.','अभी साइन इन नहीं हो सका। कृपया एक मिनट बाद लिंक फिर से खोलें।')); });
+}
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded', restoreSession);
 }else{
   restoreSession();
 }
+window.addEventListener('load', function(){ if(typeof handleSignInLink==='function') setTimeout(handleSignInLink, 300); });
 
 // If someone was mid-way through entering their OTP (they'd already
 // received the code) and the page got reloaded — very common on
@@ -3516,7 +3533,7 @@ function renderMyCustomers(){
       '<span style="font-size:0.8rem;color:'+color+';white-space:nowrap;">'+label+'</span></div>';
   const fmt=d=>new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   box.innerHTML=qs.map(q=>{
-    const st = q.status==='converted' ? [T('Converted','परिवर्तित'),'#1E7E34'] : (q.status==='cancelled' ? [T('Cancelled','रद्द'),'#B03A2E'] : [T('Waiting','प्रतीक्षा में'),'var(--gold-soft)']);
+    const st = q.status==='converted' ? [T('Converted','परिवर्तित'),'#1E7E34'] : (q.status==='cancelled' ? (q.rejected?[T('Rejected','अस्वीकृत'),'#B03A2E']:[T('Cancelled','रद्द'),'#B03A2E']) : [T('Waiting','प्रतीक्षा में'),'var(--gold-soft)']);
     const moved = q.status==='converted' ? (q.convertedOrderNumber ? T('Moved to order ','ऑर्डर में: ')+q.convertedOrderNumber : T('Moved to registration ','पंजीकरण में: ')+(q.convertedRegistrationNumber||'')) + (q.convertedService?' ('+q.convertedService+')':'') : '';
     return card(q.customerName, T('Query ','प्रश्न ')+q.ackNumber+(q.mobile?' · '+q.mobile:''), moved, fmt(q.date), st[0], st[1]);
   }).join('') + legacy.map(l=>{
@@ -6301,7 +6318,7 @@ function submitQuery(){
 
 function qStatusHTML(q){
   if(q.status==='converted') return '<span class="q-status converted">'+(q.convertedOrderNumber?T('Ordered','ऑर्डर बना'):T('Registered','पंजीकृत'))+'</span>';
-  if(q.status==='cancelled') return '<span class="q-status cancelled">'+T('Closed','बंद')+'</span>';
+  if(q.status==='cancelled') return '<span class="q-status cancelled">'+(q.rejected?T('Not accepted','स्वीकार नहीं'):T('Closed','बंद'))+'</span>';
   return '<span class="q-status waiting">'+T('Waiting','प्रतीक्षा में')+'</span>';
 }
 function qCardHTML(q){
@@ -6323,7 +6340,7 @@ function qCardHTML(q){
         T('Service: ','सेवा: ')+qEsc(q.convertedService||'')+'<br>'+
         T('Registration Number: ','पंजीकरण नंबर: ')+'<b>'+qEsc(q.convertedRegistrationNumber||'')+'</b>'+
         '<button class="btn btn-outline q-view-reg" onclick="qViewRegistrations()">'+T('View in My Registrations','मेरे पंजीकरण में देखें')+'</button></div>':'')+
-    (q.status==='cancelled'?'<div class="q-note no"><b>✕ '+T('This query has been cancelled.','यह प्रश्न रद्द कर दिया गया है।')+'</b></div>':'')+
+    (q.status==='cancelled'?'<div class="q-note no"><b>✕ '+(q.rejected?T('Sorry — we are unable to take up this query.','क्षमा करें — हम इस प्रश्न को नहीं ले पा रहे हैं।'):T('This query has been cancelled.','यह प्रश्न रद्द कर दिया गया है।'))+'</b>'+(q.rejected&&q.rejectReason?'<br>'+T('Reason: ','कारण: ')+String(q.rejectReason).replace(/[<>&]/g,''):'')+'</div>':'')+
   '</div>';
 }
 function qViewOrders(){
@@ -6379,7 +6396,7 @@ function pcpOrderChips(){
 }
 function pcpQueriesHTML(list){
   return list.map(function(q){
-    var st = q.status==='converted' ? [T('Converted','परिवर्तित'),'#1E7E34'] : (q.status==='cancelled' ? [T('Cancelled','रद्द'),'#B03A2E'] : [T('Waiting','प्रतीक्षा में'),'var(--gold-soft)']);
+    var st = q.status==='converted' ? [T('Converted','परिवर्तित'),'#1E7E34'] : (q.status==='cancelled' ? (q.rejected?[T('Rejected','अस्वीकृत'),'#B03A2E']:[T('Cancelled','रद्द'),'#B03A2E']) : [T('Waiting','प्रतीक्षा में'),'var(--gold-soft)']);
     var sub = q.status==='converted' ? ('<br><span class="pcp-entry-date" style="color:#1E7E34;">'+(q.convertedOrderNumber ? T('Moved to order ','ऑर्डर में परिवर्तित: ')+q.convertedOrderNumber : T('Moved to registration ','पंजीकरण में परिवर्तित: ')+(q.convertedRegistrationNumber||''))+(q.convertedService?' ('+q.convertedService+')':'')+'</span>') : '';
     return '<div class="pcp-entry">'+
       '<div><span class="pcp-entry-name">'+(q.customerName||'—')+'</span> <span class="pcp-entry-meta">('+T('Query','प्रश्न')+')</span><br>'+
@@ -6636,7 +6653,7 @@ function renderPcpQueries(){
     if(q.status==='converted'){
       st=['● '+T('Closed','बंद'),'#1E7E34'];
       sub='<br><span class="pcp-entry-date" style="color:#1E7E34;">↳ '+(q.convertedOrderNumber?T('Moved to order ','ऑर्डर में: ')+q.convertedOrderNumber+' · '+T('see Orders','ऑर्डर देखें'):T('Moved to registration ','पंजीकरण में: ')+(q.convertedRegistrationNumber||'')+' · '+T('see Registrations','पंजीकरण देखें'))+(q.convertedService?' ('+q.convertedService+')':'')+'</span>';
-    } else if(q.status==='cancelled'){ st=[T('Cancelled','रद्द'),'#B03A2E']; }
+    } else if(q.status==='cancelled'){ st=(q.rejected?[T('Rejected','अस्वीकृत'),'#B03A2E']:[T('Cancelled','रद्द'),'#B03A2E']); }
     else { st=[T('Waiting','प्रतीक्षा में'),'var(--gold-soft)']; }
     return '<div class="pcp-entry"><div>'+tag+'<br>'+
       '<span class="pcp-entry-name">'+(q.customerName||'—')+'</span>'+(q.mobile?' <span class="pcp-entry-meta">· '+q.mobile+'</span>':'')+'<br>'+
