@@ -124,7 +124,7 @@ function qrcode(){
   .doc .t{flex:1 1 200px;min-width:0}
   .doc .t b{display:block;font-size:14px;word-break:break-word}
   .doc .t span{font-size:12px;color:var(--muted);word-break:break-all}
-  .doc .a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+  .doc .a{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end;margin-left:auto}
   .drop{border:2px dashed #D5B08C;border-radius:12px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;background:#FFFBF5}
   .drop.hot{background:#F3E1CC;border-color:var(--copper)}
   .sticker-box{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
@@ -348,7 +348,7 @@ function renderDrawer(){
     +'</div></div>';
   var sibs=c.order_ref?CARDS.filter(function(x){return x.order_ref===c.order_ref}):[c];
   h+='<div class="sec panel"><h3>'+(c.order_ref?'ORDER '+esc(c.order_ref)+' · '+sibs.length+' QR'+(sibs.length===1?'':'s'):'ORDER')+'</h3>';
-  if(c.order_ref&&sibs.length>1) h+=sibs.map(function(x){return '<div class="doc" style="cursor:pointer" data-open="'+x.id+'"><div class="t"><b>'+esc(x.item||'Item not set')+(x.id===c.id?' (this QR)':'')+'</b><span>'+esc((x.personal_id?x.personal_id+' · ':'')+x.card_code+' · '+x.docs.length+' PDF'+(x.docs.length===1?'':'s'))+'</span></div><span class="pill s-'+x.status+'">'+x.status+'</span></div>'}).join('');
+  if(c.order_ref&&sibs.length>1) h+=sibs.map(function(x){return '<div class="doc" style="cursor:pointer" data-open="'+x.id+'"><div class="t"><b>'+esc(x.item||'Item not set')+(x.id===c.id?' (this QR)':'')+'</b><span>'+esc((x.personal_id?x.personal_id+' · ':'')+x.card_code+' · '+x.docs.length+' PDF'+(x.docs.length===1?'':'s'))+'</span></div><div class="a"><span class="pill s-'+x.status+'">'+x.status+'</span><button class="btn danger small" data-delqr="'+x.id+'" aria-label="Delete '+esc(x.card_code)+'">Delete</button></div></div>'}).join('');
   h+=(c.order_ref?'':'<p class="hint">Add an order number above and save to group several QRs under one order.</p>')
     +'<div class="row" style="margin-top:6px"><button class="btn ghost small" id="addSib">+ Another QR for this order</button>'
     +(sibs.length>1?'<button class="btn ghost small" id="printOrder">Add whole order to print sheet</button>':'')+'</div>'
@@ -392,11 +392,24 @@ function renderDrawer(){
 
   // wire up
   fillCats(); renderDetRows(c.details||[]);
-  Array.prototype.forEach.call($('dBody').querySelectorAll('[data-open]'),function(el){if(el.dataset.open!==c.id)el.onclick=function(){openCard(el.dataset.open)}});
+  Array.prototype.forEach.call($('dBody').querySelectorAll('[data-open]'),function(el){if(el.dataset.open!==c.id)el.onclick=function(e){if(e.target.dataset.delqr)return;openCard(el.dataset.open)}});
+  Array.prototype.forEach.call($('dBody').querySelectorAll('[data-delqr]'),function(b){b.onclick=function(e){
+    e.stopPropagation();
+    var x=CARDS.filter(function(k){return k.id===b.dataset.delqr})[0]; if(!x)return;
+    var used=x.docs.length||x.scan_count||x.status==='dispatched';
+    var msg='Delete '+x.card_code+(x.item?' ('+x.item+')':'')+'?\n\nIts QR will stop working'+(x.docs.length?' and its '+x.docs.length+' PDF'+(x.docs.length===1?'':'s')+' will be deleted':'')+'. This cannot be undone.';
+    if(used){ if(prompt(msg+'\n\nThis QR has PDFs, scans or was dispatched. Type '+x.card_code+' to confirm.')!==x.card_code)return; }
+    else if(!confirm(msg))return;
+    b.disabled=true;
+    api('/cards/'+x.id,{method:'DELETE'}).then(function(){delete SEL[x.id];
+      var stay=x.id===c.id?sibs.filter(function(k){return k.id!==x.id})[0]:c;
+      return reload().then(function(){if(stay)openCard(stay.id);else closeDrawer();toast(x.card_code+' deleted')})})
+      .catch(function(err){toast(err.message);b.disabled=false})}});
   if($('printOrder'))$('printOrder').onclick=function(){sibs.forEach(function(x){if(x.status==='active'||x.status==='dispatched')SEL[x.id]=1});renderList();toast(sibs.length+' QRs added to print sheet')};
   $('addSib').onclick=function(){
     if(!c.order_ref&&!$('e_order').value.trim())return toast('Type the order number and tap Save all details first');
     if($('e_order').value.trim()!==(c.order_ref||''))return toast('Tap Save all details first');
+    if(!confirm('Create another QR for order '+c.order_ref+'?\n\nUse this only when the order has another grid or card that needs its own sticker.'))return;
     $('addSib').disabled=true;
     api('/cards/'+c.id+'/sibling',{method:'POST'}).then(function(n){return reload().then(function(){openCard(n.id);toast(n.card_code+' added to order '+n.order_ref+' — set what it\'s for')})})
       .catch(function(e){toast(e.message);$('addSib').disabled=false})};

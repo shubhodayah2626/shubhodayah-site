@@ -27,14 +27,25 @@
 
   /* seal (opening screen) */
   .seal{flex:1;display:flex;flex-direction:column;align-items:stretch;justify-content:center;text-align:center;cursor:pointer;padding:20px 0;-webkit-tap-highlight-color:transparent}
-  .ecard{position:relative;display:block;width:100%;max-width:340px;margin:0 auto;border-radius:clamp(10px,3.4vw,14px);overflow:hidden;
-    box-shadow:0 14px 30px -12px rgba(80,40,15,.55),0 2px 6px rgba(80,40,15,.25);transform-style:preserve-3d}
-  .ecard img{display:block;width:100%;height:auto}
-  .ecard:after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,236,210,.55) 50%,transparent 65%);
-    transform:translateX(-120%);animation:shine 4.5s ease-in-out 1s infinite}
+  .stage{perspective:1000px;padding:14px 4px 22px}
+  .ecard{--rx:0deg;--ry:0deg;--gx:50%;--gy:30%;position:relative;display:block;width:100%;max-width:340px;margin:0 auto;
+    border-radius:clamp(10px,3.4vw,14px);transform-style:preserve-3d;transform:rotateX(var(--rx)) rotateY(var(--ry));
+    transition:transform .25s ease-out;touch-action:pan-y;will-change:transform;
+    box-shadow:0 1px 0 #f1b98c inset,
+      0 1px 0 #9a5426, 0 2px 0 #8a4a20, 0 3px 0 #7a401b, 0 4px 0 #6b3716,
+      0 22px 34px -14px rgba(70,32,10,.65), 0 8px 14px -6px rgba(70,32,10,.35)}
+  .ecard img{display:block;width:100%;height:auto;border-radius:inherit}
+  .ecard .glare{position:absolute;inset:0;border-radius:inherit;pointer-events:none;mix-blend-mode:soft-light;
+    background:radial-gradient(circle at var(--gx) var(--gy),rgba(255,236,210,.95) 0%,rgba(255,214,170,.35) 22%,rgba(60,25,5,.25) 70%)}
+  .ecard .sheen{position:absolute;inset:0;border-radius:inherit;pointer-events:none;overflow:hidden}
+  .ecard .sheen:after{content:"";position:absolute;inset:-20%;background:linear-gradient(115deg,transparent 40%,rgba(255,240,220,.55) 50%,transparent 60%);
+    transform:translateX(-120%);animation:shine 5s ease-in-out 1.2s infinite}
+  .ecard .rim{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    box-shadow:inset 0 0 0 1px rgba(255,210,170,.55),inset 0 -2px 3px rgba(70,30,8,.45),inset 0 2px 3px rgba(255,225,190,.5)}
   @keyframes shine{0%{transform:translateX(-120%)}35%,100%{transform:translateX(120%)}}
-  .seal .ecard{animation:breathe 3.2s ease-in-out infinite}
-  .seal.flip .ecard{animation:none;transition:transform .55s ease,opacity .55s ease;transform:perspective(900px) rotateY(90deg);opacity:.2}
+  @keyframes float{0%,100%{transform:translateY(0) rotateX(var(--rx)) rotateY(var(--ry))}50%{transform:translateY(-6px) rotateX(var(--rx)) rotateY(var(--ry))}}
+  .seal .ecard.idle{animation:float 4s ease-in-out infinite}
+  .seal.flip .ecard{animation:none;transition:transform .55s ease,opacity .55s ease;transform:rotateY(90deg)!important;opacity:.2}
   .ecard.sm{max-width:300px}
   .seal .tap{margin-top:22px;align-self:center;display:inline-flex;align-items:center;gap:10px;border:1.3px solid var(--copper);color:var(--copper-dk);border-radius:99px;padding:12px 22px;
     font-family:'Cinzel',serif;font-size:13px;letter-spacing:.14em;background:var(--card)}
@@ -91,7 +102,7 @@
 <div class="wrap"><div class="frame"><div class="inner">
 
   <div class="seal loading" id="seal" role="button" tabindex="0" aria-label="Open your card">
-    <div class="ecard"><img src="card-ecard.jpg" alt="Your Shubhodayah copper card"></div>
+    <div class="stage"><div class="ecard idle"><img src="card-ecard.jpg" alt="Your Shubhodayah copper card"><span class="glare"></span><span class="sheen"></span><span class="rim"></span></div></div>
     <span class="tap" id="tapTxt">OPENING…</span>
     <p class="hint" id="hint">Preparing your energised card</p>
   </div>
@@ -159,7 +170,7 @@
 
   function render(d){
     var id=d.personal_id||d.card_code, sub=[d.city,d.category].filter(Boolean).join(' · ');
-    var h='<div class="ecard sm"><img src="card-ecard.jpg" alt="Your Shubhodayah copper card"></div><div class="rule"><span></span></div>'
+    var h='<div class="stage"><div class="ecard sm"><img src="card-ecard.jpg" alt="Your Shubhodayah copper card"><span class="glare"></span><span class="sheen"></span><span class="rim"></span></div></div><div class="rule" style="margin-top:0"><span></span></div>'
       +'<div class="cap">SHUBHODAYAH · ENERGISED CARD</div><h1>'+esc(d.customer_name)+'</h1>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'');
     h+='<section class="box"><div class="box-t">YOUR SACRED DETAILS</div>'
       +'<div class="row"><span class="l">Personalised ID</span><span class="v"><button class="chip" data-copy="'+esc(id)+'">'+esc(id)+I.copy+'</button></span></div>'
@@ -186,6 +197,29 @@
     openEl.querySelectorAll('.reveal').forEach(function(b){b.onclick=function(){var s=document.createElement('span');s.textContent=d.details[+b.dataset.i].value;b.replaceWith(s)}});
     openEl.querySelectorAll('.doc-h').forEach(function(b){b.onclick=function(){var li=b.parentNode,o=li.classList.toggle('open');b.setAttribute('aria-expanded',o)}});
   }
+
+  // ---- 3D tilt: follows finger / mouse, and phone movement where allowed ----
+  var reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function setTilt(el,x,y){ // x,y in -1..1
+    x=Math.max(-1,Math.min(1,x)); y=Math.max(-1,Math.min(1,y));
+    el.style.setProperty('--ry',(x*14).toFixed(2)+'deg'); el.style.setProperty('--rx',(-y*12).toFixed(2)+'deg');
+    el.style.setProperty('--gx',(50+x*45).toFixed(1)+'%'); el.style.setProperty('--gy',(35+y*45).toFixed(1)+'%');
+  }
+  function bindTilt(el){
+    if(!el||el._tilt||reduceMotion)return; el._tilt=1;
+    function move(e){var r=el.getBoundingClientRect(),p=e.touches?e.touches[0]:e;
+      setTilt(el,((p.clientX-r.left)/r.width-.5)*2,((p.clientY-r.top)/r.height-.5)*2); el.classList.remove('idle');}
+    function reset(){setTilt(el,0,0)}
+    el.addEventListener('pointermove',move); el.addEventListener('pointerleave',reset);
+    el.addEventListener('touchmove',move,{passive:true}); el.addEventListener('touchend',reset);
+  }
+  var lastCard=null;
+  window.addEventListener('deviceorientation',function(e){
+    if(reduceMotion||e.gamma==null)return; var el=document.querySelector('#open.on .ecard')||document.querySelector('.seal .ecard');
+    if(el)setTilt(el,e.gamma/30,(e.beta-45)/30);
+  });
+  bindTilt(document.querySelector('.seal .ecard'));
+  new MutationObserver(function(){bindTilt(openEl.querySelector('.ecard'))}).observe(openEl,{childList:true});
 
   if(!/^[A-Z0-9]{6,16}$/.test(key)){ERR='nf';ready()} else load(1);
 </script>
