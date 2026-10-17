@@ -3146,18 +3146,34 @@ function finishSignIn(name, email, token){
 
 /* ---------- Sign in with Google ---------- */
 var googleClientId=null, googleReady=false;
+var googleLoading=false;
 function loadGoogleSignIn(){
-  if(googleReady) return;
-  fetch(OTP_BACKEND_URL+'/api/auth/config').then(r=>r.json()).then(cfg=>{
-    googleClientId=cfg && cfg.googleClientId; if(!googleClientId) return;
+  if(googleReady || googleLoading) return;
+  googleLoading=true;
+  var started=false;
+  var start=function(cid){
+    if(started || !cid) return; started=true;
+    googleClientId=cid;
     var go=function(){
+      if(googleReady) return;
       if(!(window.google && google.accounts && google.accounts.id)){ setTimeout(go,300); return; }
       google.accounts.id.initialize({ client_id: googleClientId, callback: onGoogleCredential, ux_mode:'popup', auto_select:false });
-      googleReady=true; renderGoogleButton();
+      googleReady=true; googleLoading=false; renderGoogleButton();
     };
-    if(!document.getElementById('gsiScript')){ var sc=document.createElement('script'); sc.id='gsiScript'; sc.src='https://accounts.google.com/gsi/client'; sc.async=true; sc.onload=go; document.head.appendChild(sc); } else go();
-  }).catch(()=>{});
+    if(!document.getElementById('gsiScript')){ var sc=document.createElement('script'); sc.id='gsiScript'; sc.src='https://accounts.google.com/gsi/client'; sc.async=true; document.head.appendChild(sc); }
+    go();
+  };
+  // Remembered from an earlier visit → the button appears at once, even while the server wakes up.
+  var cached=null; try{ cached=localStorage.getItem('shb_gcid'); }catch(e){}
+  if(cached) start(cached);
+  fetch(OTP_BACKEND_URL+'/api/auth/config').then(r=>r.json()).then(cfg=>{
+    var cid=cfg && cfg.googleClientId;
+    try{ if(cid) localStorage.setItem('shb_gcid', cid); else localStorage.removeItem('shb_gcid'); }catch(e){}
+    if(cid) start(cid); else if(!started) googleLoading=false;
+  }).catch(()=>{ if(!started) googleLoading=false; });
 }
+// Get Google sign-in ready as soon as the page loads, so the button is there the first time Sign In is tapped.
+window.addEventListener('load', function(){ setTimeout(function(){ if(!isSignedIn) loadGoogleSignIn(); }, 800); });
 function renderGoogleButton(){
   if(!googleReady) return;
   var box=document.getElementById('googleSignInBox'), el=document.getElementById('googleBtn'); if(!box||!el) return;
@@ -6247,7 +6263,7 @@ function openReferCustomer(){
     .catch(function(){ notPartner(); });
 }
 function openQueryForm(){
-  if(!isSignedIn){ qSignInFirst('form'); return; }
+  if(!isSignedIn){ closeModal('queryModal'); qSignInFirst('form'); return; }
   qAfterVerify=null;
   var verified=qReady();
   var intro=isSignedIn ? T('For your privacy, please confirm your email once with a code.','आपकी गोपनीयता के लिए, कृपया एक बार कोड से अपना ईमेल पुष्टि करें।') : T('We will send a code to your email to confirm it is yours.','आपका ईमेल पुष्टि करने के लिए हम उस पर एक कोड भेजेंगे।');
