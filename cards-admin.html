@@ -70,6 +70,7 @@ function qrcode(){
   :root{--paper:#F6E8D7;--card:#FFFAF3;--ink:#3E2714;--muted:#8A6A4C;--copper:#B06A3B;--copper-dk:#8C4F27;
     --line:#E6D2BA;--ok:#2F7A4B;--okbg:#E3F1E7;--warn:#9A6A12;--warnbg:#F7EBCF;--bad:#A23B2A;--badbg:#F6DFDA;--grey:#6F6A64;--greybg:#ECE7E1}
   *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
   body{font-family:'Lora',Georgia,serif;background:var(--paper);color:var(--ink);font-size:15px;min-height:100vh}
   button,input,select,textarea{font:inherit;color:inherit}
   .hdr{position:sticky;top:0;z-index:5;background:#3E2714;color:#F6E8D7;padding:12px 16px;display:flex;align-items:center;gap:12px}
@@ -197,7 +198,9 @@ function qrcode(){
       <div class="grow"><label class="f">Phone</label><input id="n_phone" type="text" inputmode="tel"></div></div>
     <div class="row"><div class="grow"><label class="f">Card category</label><input id="n_cat" type="text" list="catList" placeholder="Mahasiddhi"></div>
       <div class="grow"><label class="f">Personalised ID</label><input id="n_pid" type="text" placeholder="Leave blank to use SHB number"></div></div>
-    <label class="f">Order / query reference (optional)</label><input id="n_order" type="text">
+    <div class="row"><div class="grow"><label class="f">Order number</label><input id="n_order" type="text" placeholder="Same number for every QR in one order"></div>
+      <div class="grow"><label class="f">This QR is for</label><input id="n_item" type="text" list="itemList" placeholder="Copper card"></div></div>
+    <datalist id="itemList"></datalist>
     <datalist id="catList"></datalist>
     <label class="f">Text above QR</label><input id="n_caption" type="text">
     <label class="f">Internal note (never shown to customer)</label><textarea id="n_note"></textarea>
@@ -237,6 +240,7 @@ var API_BASE = 'https://shubhodayah-backend.onrender.com';   // your Render back
 var PUBLIC_BASE = 'https://shubhodayah.com/card.html?k=';            // what the QR opens — never change once cards are printed
 var DEFAULT_CAPTION = 'Scan to unveil your Vastu blessings';
 var BASE_CATEGORIES = ['Mahasiddhi', 'Vishisht'];
+var BASE_ITEMS = ['Copper card', 'Alignment Grid', 'Vastu Grid', 'Siddha Sutra Yantra'];
 /* ========================= */
 
 var KEY = sessionStorage.getItem('cardsKey') || '';
@@ -266,7 +270,7 @@ $('loginBtn').onclick=function(){
   KEY=$('key').value.trim(); if(!KEY) return;
   $('loginBtn').textContent='Checking… (server may take a minute to wake)'; $('loginErr').textContent='';
   api('/cards').then(function(c){sessionStorage.setItem('cardsKey',KEY);CARDS=c;showApp()})
-    .catch(function(e){$('loginErr').textContent=e.message==='Failed to fetch'?'Cannot reach the backend. Check API_BASE.':'Wrong key.';})
+    .catch(function(e){$('loginErr').textContent=e.message==='Failed to fetch'?'Cannot reach the backend — it may be waking up. Wait a minute and try again.':(e.message==='Please log in again'?'Wrong key. Check CARDS_ADMIN_KEY on Render (no extra spaces or lines).':e.message);})
     .finally(function(){$('loginBtn').textContent='Log in'});
 };
 $('key').onkeydown=function(e){if(e.key==='Enter')$('loginBtn').click()};
@@ -287,14 +291,14 @@ function renderList(){
     if(FILTER==='dispatched'&&c.status!=='dispatched')return false;
     if(FILTER==='inactive'&&!(c.status==='disabled'||c.status==='replaced'))return false;
     if(!q)return true;
-    return [c.card_code,c.personal_id,c.category,c.customer_name,c.city,c.phone,c.order_ref].join(' ').toLowerCase().indexOf(q)>-1;
+    return [c.card_code,c.personal_id,c.category,c.item,c.customer_name,c.city,c.phone,c.order_ref].join(' ').toLowerCase().indexOf(q)>-1;
   });
   $('list').innerHTML=rows.length?rows.map(function(c){
     var live=c.status==='active'||c.status==='dispatched';
     return '<div class="item" data-id="'+c.id+'">'
       +(live?'<input type="checkbox" class="chk" data-sel="'+c.id+'"'+(SEL[c.id]?' checked':'')+' title="Add to sticker sheet">':'<span style="width:20px"></span>')
       +'<div><div class="cid">'+esc(c.personal_id?c.personal_id+' · '+c.card_code:c.card_code)+'</div><div class="nm">'+esc(c.customer_name)+'</div>'
-      +'<div class="meta">'+esc([c.city,c.docs.length+' PDF'+(c.docs.length===1?'':'s'),date(c.created_at),c.scan_count?c.scan_count+' scans':''].filter(Boolean).join(' · '))+'</div></div>'
+      +'<div class="meta">'+esc([c.item,c.order_ref?'Order '+c.order_ref:'',c.city,c.docs.length+' PDF'+(c.docs.length===1?'':'s'),date(c.created_at),c.scan_count?c.scan_count+' scans':''].filter(Boolean).join(' · '))+'</div></div>'
       +'<span class="pill s-'+c.status+'">'+c.status+'</span></div>';
   }).join(''):'<div class="empty">'+(CARDS.length?'No cards match.':'No cards yet. Tap <b>+ New card</b> to create the first one.')+'</div>';
   Array.prototype.forEach.call(document.querySelectorAll('.item'),function(el){
@@ -307,9 +311,9 @@ function updateBar(){var n=Object.keys(SEL).length;$('printBar').hidden=!n;$('se
 $('clearSel').onclick=function(){SEL={};renderList()};
 
 /* ---------- new card ---------- */
-$('newBtn').onclick=function(){fillCats();['n_name','n_city','n_phone','n_order','n_note','n_cat','n_pid'].forEach(function(i){$(i).value=''});$('n_caption').value=DEFAULT_CAPTION;openModal('newModal');$('n_name').focus()};
+$('newBtn').onclick=function(){fillCats();['n_name','n_city','n_phone','n_order','n_note','n_cat','n_pid','n_item'].forEach(function(i){$(i).value=''});$('n_caption').value=DEFAULT_CAPTION;openModal('newModal');$('n_name').focus()};
 $('createBtn').onclick=function(){
-  var b={customer_name:$('n_name').value,city:$('n_city').value,phone:$('n_phone').value,order_ref:$('n_order').value,note:$('n_note').value,category:$('n_cat').value,personal_id:$('n_pid').value,caption:$('n_caption').value||DEFAULT_CAPTION};
+  var b={customer_name:$('n_name').value,city:$('n_city').value,phone:$('n_phone').value,order_ref:$('n_order').value,item:$('n_item').value,note:$('n_note').value,category:$('n_cat').value,personal_id:$('n_pid').value,caption:$('n_caption').value||DEFAULT_CAPTION};
   if(!b.customer_name.trim())return toast('Customer name is required');
   $('createBtn').disabled=true;
   api('/cards',{method:'POST',json:b}).then(function(c){CARDS.unshift(c);closeModal('newModal');renderList();openCard(c.id);toast(c.card_code+' created — now upload the PDF')})
@@ -337,10 +341,18 @@ function renderDrawer(){
     +'<div class="grow"><label class="f">Phone</label><input type="text" id="e_phone" value="'+esc(c.phone)+'"></div></div>'
     +'<div class="row"><div class="grow"><label class="f">Card category</label><input type="text" id="e_cat" list="catList" value="'+esc(c.category)+'"></div>'
     +'<div class="grow"><label class="f">Personalised ID</label><input type="text" id="e_pid" placeholder="'+esc(c.card_code)+'" value="'+esc(c.personal_id)+'"></div></div>'
-    +'<label class="f">Order / query reference</label><input type="text" id="e_order" value="'+esc(c.order_ref)+'">'
+    +'<div class="row"><div class="grow"><label class="f">Order number</label><input type="text" id="e_order" value="'+esc(c.order_ref)+'"></div>'
+    +'<div class="grow"><label class="f">This QR is for</label><input type="text" id="e_item" list="itemList" value="'+esc(c.item)+'"></div></div>'
     +'<label class="f">Internal note</label><textarea id="e_note">'+esc(c.note)+'</textarea>'
     +'<div class="row" style="margin-top:10px;justify-content:space-between"><span class="hint">Created '+date(c.created_at)+(c.scan_count?' · scanned '+c.scan_count+'×, last '+date(c.last_scan_at):' · not scanned yet')+'</span>'
     +'</div></div>';
+  var sibs=c.order_ref?CARDS.filter(function(x){return x.order_ref===c.order_ref}):[c];
+  h+='<div class="sec panel"><h3>'+(c.order_ref?'ORDER '+esc(c.order_ref)+' · '+sibs.length+' QR'+(sibs.length===1?'':'s'):'ORDER')+'</h3>';
+  if(c.order_ref&&sibs.length>1) h+=sibs.map(function(x){return '<div class="doc" style="cursor:pointer" data-open="'+x.id+'"><div class="t"><b>'+esc(x.item||'Item not set')+(x.id===c.id?' (this QR)':'')+'</b><span>'+esc((x.personal_id?x.personal_id+' · ':'')+x.card_code+' · '+x.docs.length+' PDF'+(x.docs.length===1?'':'s'))+'</span></div><span class="pill s-'+x.status+'">'+x.status+'</span></div>'}).join('');
+  h+=(c.order_ref?'':'<p class="hint">Add an order number above and save to group several QRs under one order.</p>')
+    +'<div class="row" style="margin-top:6px"><button class="btn ghost small" id="addSib">+ Another QR for this order</button>'
+    +(sibs.length>1?'<button class="btn ghost small" id="printOrder">Add whole order to print sheet</button>':'')+'</div>'
+    +'<p class="hint" style="margin-top:6px">Copies the name, order number, category and details. Then set what it\'s for (e.g. Alignment Grid) and upload its PDF.</p></div>';
   h+='<div class="sec panel"><h3>DETAILS SHOWN TO CUSTOMER</h3><p class="hint" style="margin-bottom:8px">Name, city, category and personalised ID always show. For each line below choose Show, Tap to show (hidden until tapped) or Hide.</p>'
     +'<div id="detRows"></div><button class="btn ghost small" id="addDet" style="margin-top:4px">+ Add detail</button>'
     +'<div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" id="saveDet">Save all details</button></div></div>';
@@ -380,10 +392,18 @@ function renderDrawer(){
 
   // wire up
   fillCats(); renderDetRows(c.details||[]);
+  Array.prototype.forEach.call($('dBody').querySelectorAll('[data-open]'),function(el){if(el.dataset.open!==c.id)el.onclick=function(){openCard(el.dataset.open)}});
+  if($('printOrder'))$('printOrder').onclick=function(){sibs.forEach(function(x){if(x.status==='active'||x.status==='dispatched')SEL[x.id]=1});renderList();toast(sibs.length+' QRs added to print sheet')};
+  $('addSib').onclick=function(){
+    if(!c.order_ref&&!$('e_order').value.trim())return toast('Type the order number and tap Save all details first');
+    if($('e_order').value.trim()!==(c.order_ref||''))return toast('Tap Save all details first');
+    $('addSib').disabled=true;
+    api('/cards/'+c.id+'/sibling',{method:'POST'}).then(function(n){return reload().then(function(){openCard(n.id);toast(n.card_code+' added to order '+n.order_ref+' — set what it\'s for')})})
+      .catch(function(e){toast(e.message);$('addSib').disabled=false})};
   $('addDet').onclick=function(){var l=readDetRows();l.push({label:'',value:'',show:'show'});renderDetRows(l);var ins=$('detRows').querySelectorAll('.dl');ins[ins.length-1].focus()};
   $('saveDet').onclick=function(){
     if(!$('e_name').value.trim())return toast('Customer name is required');
-    api('/cards/'+c.id,{method:'PATCH',json:{customer_name:$('e_name').value,city:$('e_city').value,phone:$('e_phone').value,order_ref:$('e_order').value,note:$('e_note').value,
+    api('/cards/'+c.id,{method:'PATCH',json:{customer_name:$('e_name').value,city:$('e_city').value,phone:$('e_phone').value,order_ref:$('e_order').value,item:$('e_item').value,note:$('e_note').value,
       category:$('e_cat').value,personal_id:$('e_pid').value,details:readDetRows()}}).then(function(x){upd(x);toast('Details saved')}).catch(function(e){toast(e.message)})};
   Array.prototype.forEach.call($('dBody').querySelectorAll('[data-act]'),function(b){b.onclick=function(){docAction(c,b.dataset.act,b.dataset.d)}});
   Array.prototype.forEach.call($('dBody').querySelectorAll('[data-st]'),function(b){b.onclick=function(){
@@ -494,7 +514,9 @@ $('doPrint').onclick=function(){
 };
 
 /* ---------- details editor ---------- */
-function fillCats(){var set={};BASE_CATEGORIES.concat(CARDS.map(function(c){return c.category})).forEach(function(x){if(x)set[x]=1});
+function fillCats(){var it={};BASE_ITEMS.concat(CARDS.map(function(c){return c.item})).forEach(function(x){if(x)it[x]=1});
+  $('itemList').innerHTML=Object.keys(it).map(function(x){return '<option value="'+esc(x)+'">'}).join('');
+  var set={};BASE_CATEGORIES.concat(CARDS.map(function(c){return c.category})).forEach(function(x){if(x)set[x]=1});
   $('catList').innerHTML=Object.keys(set).map(function(x){return '<option value="'+esc(x)+'">'}).join('')}
 function renderDetRows(list){
   $('detRows').innerHTML=list.map(function(d,i){
