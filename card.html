@@ -26,9 +26,17 @@
   .cap{font-family:'Cinzel',serif;letter-spacing:.22em;font-size:11px;color:var(--muted);text-align:center}
 
   /* seal (opening screen) */
-  .seal{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;padding:20px 0;-webkit-tap-highlight-color:transparent}
-  .seal img{width:min(270px,72vw);border-radius:14px;mix-blend-mode:multiply;animation:breathe 3.2s ease-in-out infinite}
-  .seal .tap{margin-top:22px;display:inline-flex;align-items:center;gap:10px;border:1.3px solid var(--copper);color:var(--copper-dk);border-radius:99px;padding:12px 22px;
+  .seal{flex:1;display:flex;flex-direction:column;align-items:stretch;justify-content:center;text-align:center;cursor:pointer;padding:20px 0;-webkit-tap-highlight-color:transparent}
+  .ecard{position:relative;display:block;width:100%;max-width:340px;margin:0 auto;border-radius:clamp(10px,3.4vw,14px);overflow:hidden;
+    box-shadow:0 14px 30px -12px rgba(80,40,15,.55),0 2px 6px rgba(80,40,15,.25);transform-style:preserve-3d}
+  .ecard img{display:block;width:100%;height:auto}
+  .ecard:after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,236,210,.55) 50%,transparent 65%);
+    transform:translateX(-120%);animation:shine 4.5s ease-in-out 1s infinite}
+  @keyframes shine{0%{transform:translateX(-120%)}35%,100%{transform:translateX(120%)}}
+  .seal .ecard{animation:breathe 3.2s ease-in-out infinite}
+  .seal.flip .ecard{animation:none;transition:transform .55s ease,opacity .55s ease;transform:perspective(900px) rotateY(90deg);opacity:.2}
+  .ecard.sm{max-width:300px}
+  .seal .tap{margin-top:22px;align-self:center;display:inline-flex;align-items:center;gap:10px;border:1.3px solid var(--copper);color:var(--copper-dk);border-radius:99px;padding:12px 22px;
     font-family:'Cinzel',serif;font-size:13px;letter-spacing:.14em;background:var(--card)}
   .seal .hint{margin-top:12px;font-size:13px;color:var(--muted)}
   @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
@@ -83,7 +91,7 @@
 <div class="wrap"><div class="frame"><div class="inner">
 
   <div class="seal loading" id="seal" role="button" tabindex="0" aria-label="Open your card">
-    <img src="card-logo.jpg" alt="Shubhodayah — Align · Heal · Elevate">
+    <div class="ecard"><img src="card-ecard.jpg" alt="Your Shubhodayah copper card"></div>
     <span class="tap" id="tapTxt">OPENING…</span>
     <p class="hint" id="hint">Preparing your energised card</p>
   </div>
@@ -135,8 +143,12 @@
       });
   }
   function openCard(){
-    if(seal.classList.contains('loading'))return;
-    seal.style.display='none'; openEl.className='on';
+    if(seal.classList.contains('loading')||seal.classList.contains('flip'))return;
+    var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    seal.classList.add('flip'); setTimeout(showCard, reduce?0:520);
+  }
+  function showCard(){
+    seal.style.display='none'; openEl.className='on'; window.scrollTo(0,0);
     if(ERR==='nf')return state('Card not found','This QR is not linked to any Shubhodayah card. Please contact us and we will help you right away.');
     if(ERR==='net')return state('Could not open right now','Please check your internet connection and scan again in a minute.');
     if(DATA.status!=='active')return state('This card is no longer active','Please contact Shubhodayah for your updated card.');
@@ -147,11 +159,13 @@
 
   function render(d){
     var id=d.personal_id||d.card_code, sub=[d.city,d.category].filter(Boolean).join(' · ');
-    var h='<img class="logo-sm" src="card-logo.jpg" alt="Shubhodayah"><div class="rule"><span></span></div>'
+    var h='<div class="ecard sm"><img src="card-ecard.jpg" alt="Your Shubhodayah copper card"></div><div class="rule"><span></span></div>'
       +'<div class="cap">SHUBHODAYAH · ENERGISED CARD</div><h1>'+esc(d.customer_name)+'</h1>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'');
     h+='<section class="box"><div class="box-t">YOUR SACRED DETAILS</div>'
       +'<div class="row"><span class="l">Personalised ID</span><span class="v"><button class="chip" data-copy="'+esc(id)+'">'+esc(id)+I.copy+'</button></span></div>'
-      +(d.category?'<div class="row"><span class="l">Card category</span><span class="v">'+esc(d.category)+'</span></div>':'');
+      +(d.item?'<div class="row"><span class="l">Product</span><span class="v">'+esc(d.item)+'</span></div>':'')
+      +(d.category?'<div class="row"><span class="l">Category</span><span class="v">'+esc(d.category)+'</span></div>':'')
+      +(d.order_ref?'<div class="row"><span class="l">Order number</span><span class="v">'+esc(d.order_ref)+'</span></div>':'');
     (d.details||[]).forEach(function(x,i){
       h+='<div class="row"><span class="l">'+esc(x.label)+'</span><span class="v">'
         +(x.tap?'<button class="reveal" data-i="'+i+'">Tap to show</button>':esc(x.value))+'</span></div>';
