@@ -2802,7 +2802,19 @@ function handleSignInLink(){
     .then(function(d){
       if(!d || !d.ok){ alert(d && d.error ? d.error : T('This sign-in link is not valid. Please ask Shubhodayah for a new one.','यह साइन-इन लिंक मान्य नहीं है। कृपया शुभोदय से नया लिंक माँगें।')); return; }
       finishSignIn(d.name, d.email, token);
-      if(d.isPartner) setTimeout(function(){ try{ openProfile(); var b=document.getElementById('partnerTabBtn'); if(b) b.style.display=''; selectProfileTab('partner'); }catch(e){} }, 1500);
+      // Stay on the home page and show a welcome message.
+      try{ goPage('home'); window.scrollTo(0,0); }catch(e){}
+      var first=String(d.name||'').split(' ')[0];
+      document.getElementById('queryModalBody').innerHTML=
+        '<div style="text-align:center;">'+
+        '<div style="font-size:2.4rem;line-height:1;margin-bottom:8px;">🎉</div>'+
+        '<h2>'+T('Congratulations','बधाई हो')+(first?', '+first.replace(/[<>&]/g,''):'')+'!</h2>'+
+        '<p>'+T('You have been signed in successfully.','आपका साइन इन सफलतापूर्वक हो गया है।')+'</p>'+
+        (d.isPartner?'<p><b>'+T('You are now a Shubhodayah Channel Partner.','अब आप शुभोदय चैनल पार्टनर हैं।')+'</b></p>'+
+          '<p class="note">'+T('You can see your Channel Partner ID and referrals anytime under Profile → My Channel Partner ID.','आप अपनी चैनल पार्टनर आईडी और रेफ़रल कभी भी प्रोफ़ाइल → My Channel Partner ID में देख सकते हैं।')+'</p>':'')+
+        '<button class="btn" style="margin-top:14px;width:100%;" onclick="closeModal(\'queryModal\')">'+T('Continue','आगे बढ़ें')+'</button>'+
+        '</div>';
+      openModal('queryModal');
     })
     .catch(function(){ alert(T('Could not sign in right now. Please try the link again in a minute.','अभी साइन इन नहीं हो सका। कृपया एक मिनट बाद लिंक फिर से खोलें।')); });
 }
@@ -6226,6 +6238,18 @@ function qSignInFirst(what){
 }
 /* Home "Submit a Query": first ask whether it is for yourself or for a customer you refer. */
 function openQueryChoice(){
+  // Only Channel Partners get the choice; everyone else goes straight to the query form.
+  if(!isSignedIn){ openQueryForm(); return; }
+  if(!myPartnerId){
+    fetch(OTP_BACKEND_URL+'/api/channel-partner/dashboard?email='+encodeURIComponent(currentUserEmail))
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d && d.isPartner){ myPartnerId=d.partnerId||true; showQueryChoice(); } else openQueryForm(); })
+      .catch(function(){ openQueryForm(); });
+    return;
+  }
+  showQueryChoice();
+}
+function showQueryChoice(){
   document.getElementById('queryModalBody').innerHTML=
     '<h2>'+T('Submit a Query','प्रश्न भेजें')+'</h2>'+
     '<p class="sub">'+T('Who is this query for?','यह प्रश्न किसके लिए है?')+'</p>'+
