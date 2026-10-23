@@ -3245,7 +3245,7 @@ function openProfile(){
           <div>
             <span style="font-size:1rem;color:var(--ink);font-weight:600;">${o.label}</span><br>
             <span style="font-size:0.82rem;color:var(--gold-soft);">${T('Order Number','ऑर्डर नंबर')}: ${o.orderNumber||'—'}</span><br>
-            ${o.receiptNumber?`<span style="font-size:0.78rem;color:var(--gold-soft);">${T('Bill Number','बिल नंबर')}: ${o.receiptNumber}</span><br>`:''}
+            ${billShown(o.receiptNumber)?`<span style="font-size:0.78rem;color:var(--gold-soft);">${T('Bill Number','बिल नंबर')}: ${billShown(o.receiptNumber)}</span><br>`:''}
             <span style="font-size:0.78rem;color:var(--ink);opacity:0.65;">${o.when}</span>
           </div>
           <span class="order-status" style="font-size:0.78rem;color:var(--gold-soft);text-align:right;max-width:130px;flex-shrink:0;">${o.status}</span>
@@ -3783,6 +3783,8 @@ function ceiResendUnlock(orderId){
     .then(r=>r.json()).then(d=>{ alert(d && d.success ? T('Done — check your email for the “Open the portal” button.','हो गया — “पोर्टल खोलें” बटन के लिए अपना ईमेल देखें।') : ((d && d.error) || T('Could not send. Please try again.','भेजा नहीं जा सका। पुनः प्रयास करें।'))); })
     .catch(()=>alert(T('Could not reach the server. Please try again.','सर्वर से संपर्क नहीं हो सका। पुनः प्रयास करें।')));
 }
+// Bill numbers are given only at payment; unpaid orders carry a hidden placeholder.
+function billShown(n){ return /^ST\//.test(String(n||''))?n:null; }
 function syncOrdersFromServer(email){
   fetch(OTP_BACKEND_URL+'/api/orders?email='+encodeURIComponent(email))
     .then(r=>r.json())
@@ -3803,7 +3805,7 @@ function syncOrdersFromServer(email){
         }
         if(o.kind==='product'){
           const pd={};
-          pd[T('Bill Number','बिल नंबर')]=o.receiptNumber;
+          pd[T('Bill Number','बिल नंबर')]=billShown(o.receiptNumber)||T('Given when the payment is received','भुगतान मिलने पर दिया जाएगा');
           if(o.fromQuery) pd[T('From your query','आपके प्रश्न से')]=o.fromQuery;
           if(o.deliveryAddress && o.deliveryAddress.line){ var da=o.deliveryAddress; pd[T('Delivery address','डिलीवरी का पता')]=[da.name,da.line,[da.city,da.state].filter(Boolean).join(', '),da.pin].filter(Boolean).join(', ')+'<br><span style="opacity:0.75;">'+T('Delivery is coordinated with you via email.','डिलीवरी आपके साथ ईमेल द्वारा समन्वित की जाती है।')+'</span>'; }
           if(o.receiptPdfUrl){ const u=OTP_BACKEND_URL+o.receiptPdfUrl; pd[T('Bill','बिल')]='<a href="'+u+'" target="_blank" style="color:var(--gold);">'+T('View','देखें')+'</a> &nbsp;|&nbsp; <a href="'+u+'" download style="color:var(--gold);">'+T('Download','डाउनलोड करें')+'</a>'; }
